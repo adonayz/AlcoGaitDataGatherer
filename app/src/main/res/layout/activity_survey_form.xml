@@ -62,6 +62,7 @@
                     android:id="@+id/subjectIDInput"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:inputType="number"
                     android:hint="Subject ID"/>
 
                 <TextView
@@ -129,33 +130,25 @@
 
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="right"
-                android:background="@color/colorPrimary">
-
-                <android.support.v7.widget.AppCompatTextView
-                    android:id="@+id/restartButton"
-                    style="@style/Widget.AppCompat.Button.Borderless.Colored"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="RESTART"
-                    android:textColor="#ffff"
-                    />
-
-                <android.support.v7.widget.AppCompatTextView
-                    android:id="@+id/saveButton"
-                    style="@style/Widget.AppCompat.Button.Borderless.Colored"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="SAVE"
-                    android:textColor="#ffff"
-                    />
-            </LinearLayout>
-
         </LinearLayout>
 
     </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="right"
+        android:background="@color/colorPrimary"
+        android:layout_alignParentBottom="true">
+
+        <android.support.v7.widget.AppCompatTextView
+            android:id="@+id/nextButton"
+            style="@style/Widget.AppCompat.Button.Borderless.Colored"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="NEXT"
+            android:textColor="#ffff"
+            />
+    </LinearLayout>
 
 </RelativeLayout>
