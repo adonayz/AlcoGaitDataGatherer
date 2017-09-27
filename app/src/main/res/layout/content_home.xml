@@ -13,7 +13,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:divider="#D3D3D3"
-        android:dividerHeight="1dp">
+        android:dividerHeight="1dp"
+        android:layout_marginBottom="@dimen/margin_right"
+        android:layout_marginTop="@dimen/margin_right"
+        android:layout_marginStart="@dimen/margin_right"
+        android:layout_marginEnd="@dimen/margin_right">
 
     </ListView>
 </RelativeLayout>

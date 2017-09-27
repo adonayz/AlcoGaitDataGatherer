@@ -8,8 +8,15 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ListView;
+
+import java.io.File;
+import java.util.LinkedList;
 
 public class HomeActivity extends AppCompatActivity {
+
+    private ListView surveyListView;
+    private LinkedList<File> surveyFiles;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -17,6 +24,34 @@ public class HomeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_home);
         Toolbar toolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(toolbar);
+
+        surveyListView = (ListView) findViewById(R.id.surveyList);
+
+        String baseDir = android.os.Environment.getExternalStorageDirectory().getAbsolutePath() + "/AlcoGaitDataGatherer/";
+
+        File alcoGaitDirectory = new File(baseDir);
+        alcoGaitDirectory.mkdir();
+
+        File[] allFilesFromDir = alcoGaitDirectory.listFiles();
+
+        String fileShouldStartWith = "ID_";
+        String fileShouldEndWith = ".csv";
+
+        surveyFiles = new LinkedList<>();
+
+        for(File file: allFilesFromDir){
+            String fileName = file.getName();
+            if(fileName.length() > 7){
+                if(fileName.substring(0, fileShouldStartWith.length()).equals(fileShouldStartWith)
+                        && fileName.substring(fileName.length() - fileShouldEndWith.length(), fileName.length()).equals(fileShouldEndWith)){
+                    surveyFiles.add(file);
+                }
+            }
+        }
+
+        SurveyListAdapter surveyListAdapter = new SurveyListAdapter(this, surveyFiles);
+
+        surveyListView.setAdapter(surveyListAdapter);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {

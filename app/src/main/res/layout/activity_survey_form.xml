@@ -17,7 +17,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
-            android:elevation="4dp"
+            android:elevation="4sp"
             android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
 
@@ -31,103 +31,120 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="36sp"
+            android:layout_marginStart="@dimen/margin_left"
+            android:layout_marginEnd="@dimen/margin_right"
+            android:layout_marginLeft="@dimen/margin_left"
+            android:layout_marginRight="@dimen/margin_right"
+            android:paddingBottom="120sp"
             android:orientation="vertical">
 
-            <LinearLayout
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Subject Information"
+                android:textColor="@color/colorPrimary"
+                android:textStyle="bold"
+                android:textSize="20sp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="What is the subject's ID?"
+                android:layout_marginTop="30sp"/>
+
+            <EditText
+                android:id="@+id/subjectIDInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="36sp"
-                android:layout_marginStart="@dimen/margin_left"
-                android:layout_marginEnd="@dimen/margin_right"
-                android:layout_marginLeft="@dimen/margin_left"
-                android:layout_marginRight="@dimen/margin_right"
-                android:layout_marginBottom="30sp"
-                android:orientation="vertical">
+                android:inputType="number|none"
+                android:maxLength="4"
+                android:digits="0123456789"
+                android:hint="Subject ID (0 - 9999)"/>
 
-                <TextView
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="What is your gender?"
+                android:layout_marginTop="30sp"/>
+
+            <RadioGroup
+                android:id="@+id/genderRadioGroup"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="15sp"
+                android:backgroundTint="@color/colorAccent"
+                android:foregroundTint="@color/colorAccent">
+                <RadioButton
+                    android:id="@+id/maleRadio"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Subject Information"
-                    android:textColor="@color/colorPrimary"
-                    android:textStyle="bold"
-                    android:textSize="20sp"/>
-
-                <TextView
+                    android:text="Male"
+                    android:textColor="@color/colorAccent"
+                    android:checked="true"/>
+                <RadioButton
+                    android:id="@+id/femaleRadio"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="What is the subject's ID?"
-                    android:layout_marginTop="30sp"/>
+                    android:text="Female"
+                    android:layout_marginStart="20sp"
+                    android:textColor="@color/colorAccent"/>
+            </RadioGroup>
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="What is the subject's date of birth?"
+                android:layout_marginTop="30sp"/>
+
+            <EditText
+                android:id="@+id/dateInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:hint="Date Of Birth"
+                android:focusableInTouchMode="false"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="What is the subject's weight?"
+                android:layout_marginTop="30sp"/>
+
+            <EditText
+                android:id="@+id/weightInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"
+                android:hint="Pounds (lbs)"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="What is the subject's height?"
+                android:layout_marginTop="30sp"/>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
                 <EditText
-                    android:id="@+id/subjectIDInput"
-                    android:layout_width="match_parent"
+                    android:id="@+id/heightFeetInput"
+                    android:layout_width="55sp"
                     android:layout_height="wrap_content"
-                    android:inputType="number"
-                    android:hint="Subject ID"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="What is your gender?"
-                    android:layout_marginTop="30sp"/>
-
-                <RadioGroup
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="15sp"
-                    android:backgroundTint="@color/colorAccent"
-                    android:foregroundTint="@color/colorAccent">
-                    <RadioButton
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Male"
-                        android:textColor="@color/colorAccent"/>
-                    <RadioButton
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Female"
-                        android:layout_marginStart="20sp"
-                        android:textColor="@color/colorAccent"/>
-                </RadioGroup>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="What is the subject's date of birth?"
-                    android:layout_marginTop="30sp"/>
-
+                    android:inputType="number|none"
+                    android:maxLength="1"
+                    android:digits="0123456789"
+                    android:hint="Feet"/>
                 <EditText
-                    android:id="@+id/dateInput"
-                    android:layout_width="match_parent"
+                    android:id="@+id/heightInchesInput"
+                    android:layout_width="55sp"
                     android:layout_height="wrap_content"
-                    android:clickable="true"
-                    android:hint="Date Of Birth"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="What is the subject's weight?"
-                    android:layout_marginTop="30sp"/>
-
-                <EditText
-                    android:id="@+id/weightInput"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Weight"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="What is the subject's height?"
-                    android:layout_marginTop="30sp"/>
-
-                <EditText
-                    android:id="@+id/heightInput"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Height"/>
-
+                    android:inputType="number|none"
+                    android:maxLength="2"
+                    android:digits="0123456789"
+                    android:hint="Inches"/>
             </LinearLayout>
 
         </LinearLayout>

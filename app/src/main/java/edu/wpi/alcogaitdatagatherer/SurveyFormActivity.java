@@ -9,6 +9,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.RadioButton;
 
 import java.util.Calendar;
 
@@ -23,7 +24,13 @@ public class SurveyFormActivity extends AppCompatActivity {
         toolbar.setTitle("Add Test Subject");
         setSupportActionBar(toolbar);
 
+        final EditText subjectIDInput = (EditText) findViewById(R.id.subjectIDInput);
+        final RadioButton maleRadioButton = (RadioButton) findViewById(R.id.maleRadio);
+        final RadioButton femaleRadioButton = (RadioButton) findViewById(R.id.femaleRadio);
         final EditText dateInput = (EditText) findViewById(R.id.dateInput);
+        final EditText weightInput = (EditText) findViewById(R.id.weightInput);
+        final EditText heightFeetInput = (EditText) findViewById(R.id.heightFeetInput);
+        final EditText heightInchesInput = (EditText) findViewById(R.id.heightInchesInput);
 
         dateInput.setKeyListener(null);
 
@@ -54,17 +61,31 @@ public class SurveyFormActivity extends AppCompatActivity {
             }
         });
 
-        final EditText subjectIDInput = (EditText) findViewById(R.id.subjectIDInput);
-
         AppCompatTextView nextButton = (AppCompatTextView) findViewById(R.id.nextButton);
 
         nextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String subjectID = subjectIDInput.getText().toString();
-                if(!subjectID.trim().isEmpty()){
+                String subjectID = subjectIDInput.getText().toString().trim();
+                String date = dateInput.getText().toString().trim();
+                String weight = weightInput.getText().toString().trim();
+                String heightFeet = heightFeetInput.getText().toString().trim();
+                String heightInches = heightInchesInput.getText().toString().trim();
+                if(!subjectID.isEmpty() && !date.isEmpty() && !weight.isEmpty() && !heightFeet.isEmpty() && !heightInches.isEmpty() && (maleRadioButton.isChecked() || femaleRadioButton.isChecked())){
+
+                    TestSubject testSubject;
+                    Gender gender;
+
+                    if(maleRadioButton.isChecked()){
+                        gender = Gender.MALE;
+                    }else{
+                        gender = Gender.FEMALE;
+                    }
+
+                    testSubject = new TestSubject(subjectID, gender, date, Double.valueOf(weight), Integer.valueOf(heightFeet), Integer.valueOf(heightInches));
+
                     Intent intent = new Intent(SurveyFormActivity.this, DataGatheringActivity.class);
-                    intent.putExtra("subject_id", subjectID);
+                    intent.putExtra("test_subject", testSubject);
                     startActivity(intent);
                 }
             }

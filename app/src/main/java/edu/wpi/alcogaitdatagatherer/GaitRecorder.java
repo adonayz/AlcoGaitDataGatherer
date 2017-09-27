@@ -3,12 +3,18 @@ package edu.wpi.alcogaitdatagatherer;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.AsyncTask;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.opencsv.CSVWriter;
@@ -36,16 +42,17 @@ public class GaitRecorder implements SensorEventListener {
     private boolean isRecording;
     private CSVWriter writer;
     private Context context;
-    private TextView accDataDisplay;
-    private TextView gyroDataDisplay;
     private LinkedList<String[]> listOfData;
     private int countAttempts;
-    private TextView countAttemptsTextView;
+    private TextView walkNumberDisplay;
     private LinkedList<LinkedList<String[]>> completeDataSetFromSurvey;
     private final static int DELAYINMILLISECONDS = 1;
+    private TestSubject testSubject;
+    private Double BAC;
 
-    GaitRecorder(Context context, String mFileName, TextView accDataDisplay, TextView gyroDataDisplay, TextView countAttemptsTextView) {
+    GaitRecorder(Context context, String mFileName, TestSubject testSubject, TextView walkNumberDisplay) {
         this.context = context;
+        this.testSubject = testSubject;
         this.mSensorManager = (SensorManager) context.getSystemService(SENSOR_SERVICE);
         this.mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         this.mGyroscope = mSensorManager.getDefaultSensor(TYPE_GYROSCOPE);
@@ -54,15 +61,9 @@ public class GaitRecorder implements SensorEventListener {
         listOfData = new LinkedList<>();
         completeDataSetFromSurvey = new LinkedList<>();
 
-
-        this.countAttemptsTextView = countAttemptsTextView;
+        this.walkNumberDisplay = walkNumberDisplay;
         countAttempts = 0;
-        updateAttemptCount();
-
-        this.accDataDisplay = accDataDisplay;
-        this.gyroDataDisplay = gyroDataDisplay;
-        this.accDataDisplay.setText("");
-        this.gyroDataDisplay.setText("");
+        updateWalkCount();
     }
 
     public void registerListeners() {
@@ -91,13 +92,7 @@ public class GaitRecorder implements SensorEventListener {
 
             listOfData.add(gaitData);
 
-            String sensorData = sensorName + " X: " + sensorEvent.values[0] + " Y: " + sensorEvent.values[1] + " Z: " + sensorEvent.values[2];
-
-            if(Sensor.STRING_TYPE_ACCELEROMETER.equals(sensorEvent.sensor.getStringType())){
-                accDataDisplay.setText(sensorData);
-            }else if(Sensor.STRING_TYPE_GYROSCOPE.equals(sensorEvent.sensor.getStringType())){
-                gyroDataDisplay.setText(sensorData);
-            }
+            //String sensorData = sensorName + " X: " + sensorEvent.values[0] + " Y: " + sensorEvent.values[1] + " Z: " + sensorEvent.values[2];
         }
     }
 
@@ -106,11 +101,13 @@ public class GaitRecorder implements SensorEventListener {
 
     }
 
-    public void startRecording() {
+    void startRecording(Double BAC) {
+        this.BAC = BAC;
+
         isRecording = true;
     }
 
-    public void stopRecording() {
+    void stopRecording(final EditText bacInput, final TextView previousBACDisplay) {
         isRecording = false;
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
 
@@ -119,10 +116,25 @@ public class GaitRecorder implements SensorEventListener {
             public void onClick(DialogInterface dialog, int which) {
                 switch (which){
                     case DialogInterface.BUTTON_POSITIVE:
-                        countAttempts++;
-                        updateAttemptCount();
-                        completeDataSetFromSurvey.add(listOfData);
+                        LinkedList<String[]> spaceAndWalkInformation = new LinkedList<>();
+
+                        String[] walkInformation = {"Walk Number " + (countAttempts + 1), "BAC = " + BAC};
+                        String[] space1 = {""};
+
+                        spaceAndWalkInformation.add(walkInformation);
+                        spaceAndWalkInformation.add(space1);
+                        spaceAndWalkInformation.addAll(listOfData);
+
+                        completeDataSetFromSurvey.add(spaceAndWalkInformation);
                         listOfData = new LinkedList<>();
+                        countAttempts++;
+
+                        updateWalkCount();
+                        String prevBACValueString = bacInput.getText().toString().trim();
+                        Double prevBACValue = Double.parseDouble(prevBACValueString);
+                        previousBACDisplay.setVisibility(View.VISIBLE);
+                        previousBACDisplay.setText("Previous BAC value = " + prevBACValue);
+                        bacInput.setText(String.valueOf(prevBACValue + 1));
                         break;
 
                     case DialogInterface.BUTTON_NEGATIVE:
@@ -133,44 +145,87 @@ public class GaitRecorder implements SensorEventListener {
             }
         };
 
-        builder.setMessage("Do you want to keep data from this session? (" + listOfData.size() + " results)").setPositiveButton("Yes", dialogClickListener)
+        builder.setTitle("Confirm Walk");
+        builder.setMessage("Do you want to keep data from this walk? (" + listOfData.size() + " results) If you choose 'No' you will repeat this walk. \n(Walk Number " + (countAttempts + 1) + ")").setPositiveButton("Yes", dialogClickListener)
                 .setNegativeButton("No", dialogClickListener).show();
 
     }
 
-    public void writeToCSV(LinkedList<String[]> listOfData) {
-        File f = new File(mFileName);
-        try {
-            if (f.exists() && !f.isDirectory()) {
-                writer = new CSVWriter(new FileWriter(mFileName));
-            } else {
-                FileWriter mFileWriter = new FileWriter(mFileName, true);
-                writer = new CSVWriter(mFileWriter);
+    public void writeToCSV(final ProgressBar progressBar, final Window window) {
+        new AsyncTask<LinkedList<LinkedList<String[]>>, Integer, Void>(){
+            @Override
+            protected void onPreExecute(){
+                super.onPreExecute();
+                progressBar.setVisibility(View.VISIBLE);
+                window.setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                        WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
             }
 
-            for (String[] data : listOfData) {
-                writer.writeNext(data);
+            @Override
+            protected Void doInBackground(LinkedList<LinkedList<String[]>>... linkedLists) {
+                File f = new File(mFileName);
+                try {
+                    if (f.exists() && !f.isDirectory()) {
+                        writer = new CSVWriter(new FileWriter(mFileName));
+                    } else {
+                        FileWriter mFileWriter = new FileWriter(mFileName, true);
+                        writer = new CSVWriter(mFileWriter);
+                    }
+
+                    for (LinkedList<String[]> los: linkedLists[0]){
+                        for (String[] data : los) {
+                            writer.writeNext(data);
+                        }
+
+                        String[] space1 = {""};
+                        String[] space2 = {""};
+                        String[] space3 = {""};
+                        String[] space4 = {""};
+                        String[] space5 = {""};
+                        String[] space6 = {""};
+                        String[] space7 = {""};
+                        String[] space8 = {""};
+
+                        writer.writeNext(space1);
+                        writer.writeNext(space2);
+                        writer.writeNext(space3);
+                        writer.writeNext(space4);
+                        writer.writeNext(space5);
+                        writer.writeNext(space6);
+                        writer.writeNext(space7);
+                        writer.writeNext(space8);
+                    }
+
+                    writer.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return null;
             }
 
-            writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+           /* @Override
+            protected void onProgressUpdate(Integer... values) {
+                //pDialog.setMessage("please wait..."+ values[0]);
+                //pDialog.show();
+            }*/
+
+            @Override
+            protected void onPostExecute(Void result) {
+                super.onPostExecute(result);
+                progressBar.setVisibility(View.GONE);
+                Intent intent = new Intent(context, HomeActivity.class);
+                context.startActivity(intent);
+                window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+            }
+        }.execute(completeDataSetFromSurvey);
+
     }
 
-    public Sensor getmAccelerometer() {
-        return mAccelerometer;
+    private void updateWalkCount(){
+        walkNumberDisplay.setText("Walk Number " + (countAttempts + 1));
     }
 
-    public Sensor getmGyroscope() {
-        return mGyroscope;
-    }
-
-    private void updateAttemptCount(){
-        countAttemptsTextView.setText("Walk number " + countAttempts);
-    }
-
-    public void restartDataCollection(final EditText bacInput, final Button beginButton){
+    void restartDataCollection(final EditText bacInput, final Button beginButton){
         DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -188,26 +243,18 @@ public class GaitRecorder implements SensorEventListener {
             }
         };
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setMessage("Do you want to remove all data and restart data collection from scratch? (" + completeDataSetFromSurvey.size() + " attempts/sessions of data collected)").setPositiveButton("Yes", dialogClickListener)
+        builder.setTitle("Restart");
+        builder.setMessage("Do you want to remove all walks and restart data collection from scratch? (" + completeDataSetFromSurvey.size() + " walk(s) recorded)").setPositiveButton("Yes", dialogClickListener)
                 .setNegativeButton("No", dialogClickListener).show();
 
     }
 
-    public void restart(){
+    private void restart(){
         isRecording = false;
         listOfData = new LinkedList<>();
         completeDataSetFromSurvey = new LinkedList<>();
 
         countAttempts = 0;
-        updateAttemptCount();
-
-        this.accDataDisplay.setText("");
-        this.gyroDataDisplay.setText("");
-    }
-
-    public void saveSessions(){
-        for (LinkedList<String[]> los: completeDataSetFromSurvey){
-            writeToCSV(los);
-        }
+        updateWalkCount();
     }
 }
