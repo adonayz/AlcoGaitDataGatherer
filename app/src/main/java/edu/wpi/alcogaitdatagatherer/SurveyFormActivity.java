@@ -6,7 +6,11 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatTextView;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.RadioButton;
@@ -14,6 +18,8 @@ import android.widget.RadioButton;
 import java.util.Calendar;
 
 public class SurveyFormActivity extends AppCompatActivity {
+
+    private boolean isIDUnavailable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,6 +29,9 @@ public class SurveyFormActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.survey_toolbar);
         toolbar.setTitle("Add Test Subject");
         setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        isIDUnavailable = false;
 
         final EditText subjectIDInput = (EditText) findViewById(R.id.subjectIDInput);
         final RadioButton maleRadioButton = (RadioButton) findViewById(R.id.maleRadio);
@@ -31,6 +40,27 @@ public class SurveyFormActivity extends AppCompatActivity {
         final EditText weightInput = (EditText) findViewById(R.id.weightInput);
         final EditText heightFeetInput = (EditText) findViewById(R.id.heightFeetInput);
         final EditText heightInchesInput = (EditText) findViewById(R.id.heightInchesInput);
+
+        subjectIDInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if(isIDUnavailable = SurveyListAdapter.getSavedIDs().contains(editable.toString().trim())){
+                    subjectIDInput.setError("This ID already exists. Please enter a valid ID.");
+                }else{
+                    subjectIDInput.setError(null);
+                }
+            }
+        });
 
         dateInput.setKeyListener(null);
 
@@ -45,6 +75,7 @@ public class SurveyFormActivity extends AppCompatActivity {
                 myCalendar.set(Calendar.YEAR, year);
                 myCalendar.set(Calendar.MONTH, monthOfYear);
                 myCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                dateInput.setError(null);
                 dateInput.setText(monthOfYear + "/" + dayOfMonth + "/" + year);
             }
 
@@ -61,9 +92,10 @@ public class SurveyFormActivity extends AppCompatActivity {
             }
         });
 
-        AppCompatTextView nextButton = (AppCompatTextView) findViewById(R.id.nextButton);
 
-        nextButton.setOnClickListener(new View.OnClickListener() {
+        AppCompatTextView submitButton = (AppCompatTextView) findViewById(R.id.submitButton);
+
+        submitButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 String subjectID = subjectIDInput.getText().toString().trim();
@@ -71,7 +103,16 @@ public class SurveyFormActivity extends AppCompatActivity {
                 String weight = weightInput.getText().toString().trim();
                 String heightFeet = heightFeetInput.getText().toString().trim();
                 String heightInches = heightInchesInput.getText().toString().trim();
-                if(!subjectID.isEmpty() && !date.isEmpty() && !weight.isEmpty() && !heightFeet.isEmpty() && !heightInches.isEmpty() && (maleRadioButton.isChecked() || femaleRadioButton.isChecked())){
+
+                EditText[] editTexts = {subjectIDInput, dateInput, weightInput, heightFeetInput, heightInchesInput};
+                for(EditText anEditText: editTexts){
+                    if(anEditText.getText().toString().trim().isEmpty()){
+                        anEditText.setError("Please enter data");
+                    }
+                }
+
+                if(!subjectID.isEmpty() && !date.isEmpty() && !weight.isEmpty() && !heightFeet.isEmpty() &&
+                        !heightInches.isEmpty() && (maleRadioButton.isChecked() || femaleRadioButton.isChecked()) && !isIDUnavailable){
 
                     TestSubject testSubject;
                     Gender gender;
@@ -90,6 +131,34 @@ public class SurveyFormActivity extends AppCompatActivity {
                 }
             }
         });
+
+        weightInput.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View view, boolean b) {
+               getWindow().setSoftInputMode(
+                        WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+            }
+        });
+
+        heightFeetInput.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View view, boolean b) {
+                getWindow().setSoftInputMode(
+                        WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+            }
+        });
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            // Respond to the action bar's Up/Home button
+            case android.R.id.home:
+                onBackPressed();
+                this.finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
 }

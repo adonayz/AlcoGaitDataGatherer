@@ -16,13 +16,12 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatTextView;
 import android.support.v7.widget.Toolbar;
-import android.text.Editable;
-import android.text.TextWatcher;
+import android.text.method.ScrollingMovementMethod;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.io.File;
@@ -33,10 +32,10 @@ public class DataGatheringActivity extends AppCompatActivity {
 
     private String mFilename;
     private GaitRecorder gaitRecorder;
-    static boolean areAllSessionsCompleted = false;
     private final int RECORD_TIME_IN_SECONDS= 60;
     private TestSubject testSubject;
     private Double BAC;
+    private static final int READ_WRITE_PERMISSION_CODE = 1000;
 
 
     @Override
@@ -47,6 +46,7 @@ public class DataGatheringActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.survey_toolbar);
         toolbar.setTitle("Record Gait Data");
         setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         Intent prevIntent = getIntent();
         testSubject= (TestSubject) prevIntent.getSerializableExtra("test_subject");
@@ -66,15 +66,18 @@ public class DataGatheringActivity extends AppCompatActivity {
 
         final Button stopButton = (Button) findViewById(R.id.stop_recording);
 
-        final TextView walkNumberDisplay = (TextView) findViewById(R.id.attemptsRecorded);
+        final TextView walkNumberDisplay = (TextView) findViewById(R.id.walkNumberDisplay);
 
         final EditText bacInput = (EditText) findViewById(R.id.bacInput);
 
         final AppCompatTextView restartButton = (AppCompatTextView) findViewById(R.id.restartButton);
 
+        final AppCompatTextView reDoWalkButton = (AppCompatTextView) findViewById(R.id.redoWalkButton);
+
         final AppCompatTextView saveButton = (AppCompatTextView) findViewById(R.id.saveButton);
 
-        final TextView previousBACDisplay = (TextView) findViewById(R.id.previousBACDisplay);
+        final TextView walkLogDisplay = (TextView) findViewById(R.id.walkLogDisplay);
+        walkLogDisplay.setMovementMethod(new ScrollingMovementMethod());
 
         String baseDir = android.os.Environment.getExternalStorageDirectory().getAbsolutePath() + "/AlcoGaitDataGatherer/";
 
@@ -85,120 +88,108 @@ public class DataGatheringActivity extends AppCompatActivity {
         mFilename = baseDir + File.separator + fileName;
 
 
-        gaitRecorder = new GaitRecorder(this, mFilename, testSubject, walkNumberDisplay);
+        gaitRecorder = new GaitRecorder(this, mFilename, testSubject, walkNumberDisplay, walkLogDisplay);
         gaitRecorder.registerListeners();
 
         beginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                BAC = Double.valueOf(bacInput.getText().toString().trim());
+                if(bacInput.getText().toString().trim().isEmpty()){
+                    bacInput.setError("Please enter BAC data.");
+                }else{
+                    BAC = Double.valueOf(bacInput.getText().toString().trim());
 
-                gaitRecorder.startRecording(BAC);
-                // 3
-                beginButton.setVisibility(View.GONE);
-                bacInput.setEnabled(false);
-                countdown_title.setVisibility(View.VISIBLE);
-                walkNumberDisplay.setVisibility(View.VISIBLE);
-                restartButton.setEnabled(false);
-                saveButton.setEnabled(false);
-                previousBACDisplay.setVisibility(View.GONE);
+                    gaitRecorder.startRecording(BAC);
+                    // 3
+                    beginButton.setVisibility(View.GONE);
+                    bacInput.setEnabled(false);
+                    countdown_title.setVisibility(View.VISIBLE);
+                    walkNumberDisplay.setVisibility(View.VISIBLE);
+                    restartButton.setEnabled(false);
+                    reDoWalkButton.setEnabled(false);
+                    saveButton.setEnabled(false);
 
-                // 4
-                final CountDownTimer count = new CountDownTimer(RECORD_TIME_IN_SECONDS * 1000, 1000) {
+                    // 4
+                    final CountDownTimer count = new CountDownTimer(RECORD_TIME_IN_SECONDS * 1000, 1000) {
 
-                    // 5
-                    public void onTick(long millisUntilFinished) {
-                        countdown.setText(String.valueOf(millisUntilFinished / 1000));
+                        // 5
+                        public void onTick(long millisUntilFinished) {
+                            countdown.setText(String.valueOf(millisUntilFinished / 1000));
 
-                        if((millisUntilFinished / 1000) == 30){
-                            ToneGenerator toneGen1 = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
-                            toneGen1.startTone(ToneGenerator.TONE_CDMA_ONE_MIN_BEEP,1000);
-                            Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-                            v.vibrate(1000);
-                        }
-                    }
-
-                    // 6
-                    public void onFinish() {
-                        stopCurrentSession(countdown_title, beginButton, stopButton, bacInput, previousBACDisplay, this);
-                        bacInput.setEnabled(true);
-                        createToolTip(bacInput, Tooltip.Gravity.RIGHT, "Updated BAC for next walk");
-                        restartButton.setEnabled(true);
-                        saveButton.setEnabled(true);
-                    }
-                };
-
-                // 7
-                count.start();
-
-                stopButton.setVisibility(View.VISIBLE);
-                stopButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        count.cancel();
-                        count.onFinish();
-                    }
-                });
-
-                restartButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        gaitRecorder.restartDataCollection(bacInput, beginButton);
-                        count.onTick(RECORD_TIME_IN_SECONDS * 1000);
-                        bacInput.setText("");
-                        previousBACDisplay.setText("");
-                        previousBACDisplay.setVisibility(View.GONE);
-
-                    }
-                });
-
-                saveButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        requestPermissions();
-
-                        final  ProgressBar  progressBar = (ProgressBar) findViewById(R.id.progressBar);
-
-                        DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                switch (which){
-                                    case DialogInterface.BUTTON_POSITIVE:
-                                        Window window = getWindow();
-                                        gaitRecorder.writeToCSV(progressBar, window);
-                                        break;
-
-                                    case DialogInterface.BUTTON_NEGATIVE:
-                                        //No button clicked
-                                        break;
-                                }
+                            if((millisUntilFinished / 1000) == 30){
+                                ToneGenerator toneGen1 = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
+                                toneGen1.startTone(ToneGenerator.TONE_CDMA_ONE_MIN_BEEP,1000);
+                                Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                                v.vibrate(1000);
                             }
-                        };
-                        AlertDialog.Builder builder = new AlertDialog.Builder(DataGatheringActivity.this);
-                        builder.setTitle("Save Walks");
-                        builder.setMessage("Do you want to complete survey and save data to a CSV file?").setPositiveButton("Yes", dialogClickListener)
-                                .setNegativeButton("No", dialogClickListener).show();
-                    }
-                });
-            }
-        });
+                        }
 
+                        // 6
+                        public void onFinish() {
+                            stopCurrentSession(countdown_title, beginButton, stopButton, bacInput, this);
+                            bacInput.setEnabled(true);
+                            createToolTip(bacInput, Tooltip.Gravity.RIGHT, "Updated BAC for next walk");
+                            restartButton.setEnabled(true);
+                            reDoWalkButton.setEnabled(true);
+                            saveButton.setEnabled(true);
+                        }
+                    };
 
-        bacInput.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                    // 7
+                    count.start();
 
-            }
+                    stopButton.setVisibility(View.VISIBLE);
+                    stopButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            count.cancel();
+                            count.onFinish();
+                        }
+                    });
 
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                    restartButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            gaitRecorder.restartDataCollection(bacInput);
+                            count.onTick(RECORD_TIME_IN_SECONDS * 1000);
 
-            }
+                        }
+                    });
 
-            @Override
-            public void afterTextChanged(Editable editable) {
-                String input = bacInput.getText().toString().trim();
-                beginButton.setEnabled(!input.equals(""));
+                    reDoWalkButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            gaitRecorder.reDoWalk(bacInput);
+                        }
+                    });
+
+                    saveButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            requestPermissions();
+
+                            DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    switch (which){
+                                        case DialogInterface.BUTTON_POSITIVE:
+                                            Window window = getWindow();
+                                            gaitRecorder.writeToCSV(window);
+                                            break;
+
+                                        case DialogInterface.BUTTON_NEGATIVE:
+                                            //No button clicked
+                                            break;
+                                    }
+                                }
+                            };
+                            AlertDialog.Builder builder = new AlertDialog.Builder(DataGatheringActivity.this);
+                            builder.setTitle("Save Walks");
+                            builder.setMessage("Do you want to complete survey and save data to a CSV file?").setPositiveButton("Yes", dialogClickListener)
+                                    .setNegativeButton("No", dialogClickListener).show();
+                        }
+                    });
+                }
             }
         });
     }
@@ -223,14 +214,13 @@ public class DataGatheringActivity extends AppCompatActivity {
 
 
     private void stopCurrentSession(TextView countdown_title, Button beginButton, Button stopButton,
-                                    EditText bacInput, TextView previousBACDisplay, CountDownTimer countDownTimer){
+                                    EditText bacInput, CountDownTimer countDownTimer){
         countdown_title.setVisibility(View.GONE);
         beginButton.setVisibility(View.VISIBLE);
-        beginButton.setText("Start Walk");
         stopButton.setVisibility(View.GONE);
         countDownTimer.onTick(RECORD_TIME_IN_SECONDS * 1000);
 
-        gaitRecorder.stopRecording(bacInput, previousBACDisplay);
+        gaitRecorder.stopRecording(bacInput);
     }
 
 
@@ -270,9 +260,21 @@ public class DataGatheringActivity extends AppCompatActivity {
             } else {
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        102);
+                        READ_WRITE_PERMISSION_CODE);
             }
         }
 
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            // Respond to the action bar's Up/Home button
+            case android.R.id.home:
+                onBackPressed();
+                this.finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

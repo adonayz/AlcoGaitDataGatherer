@@ -60,7 +60,9 @@
                 android:inputType="number|none"
                 android:maxLength="4"
                 android:digits="0123456789"
-                android:hint="Subject ID (0 - 9999)"/>
+                android:hint="Subject ID (0 - 9999)"
+                android:imeOptions="actionNext"
+                android:nextFocusDown="@+id/genderRadioGroup" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -75,7 +77,9 @@
                 android:orientation="horizontal"
                 android:layout_marginTop="15sp"
                 android:backgroundTint="@color/colorAccent"
-                android:foregroundTint="@color/colorAccent">
+                android:foregroundTint="@color/colorAccent"
+                android:imeOptions="actionNext"
+                android:nextFocusDown="@+id/dateInput" >
                 <RadioButton
                     android:id="@+id/maleRadio"
                     android:layout_width="wrap_content"
@@ -104,7 +108,9 @@
                 android:layout_height="wrap_content"
                 android:clickable="true"
                 android:hint="Date Of Birth"
-                android:focusableInTouchMode="false"/>
+                android:focusableInTouchMode="false"
+                android:imeOptions="actionNext"
+                android:nextFocusDown="@+id/weightInput" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -117,7 +123,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="numberDecimal"
-                android:hint="Pounds (lbs)"/>
+                android:hint="Pounds (lbs)"
+                android:imeOptions="actionNext"
+                android:nextFocusDown="@+id/heightFeetInput"/>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -131,19 +139,22 @@
                 android:orientation="horizontal">
                 <EditText
                     android:id="@+id/heightFeetInput"
-                    android:layout_width="55sp"
+                    android:layout_width="60sp"
                     android:layout_height="wrap_content"
                     android:inputType="number|none"
                     android:maxLength="1"
                     android:digits="0123456789"
-                    android:hint="Feet"/>
+                    android:hint="Feet"
+                    android:imeOptions="actionNext"
+                    android:nextFocusRight="@+id/heightInchesInput"/>
                 <EditText
                     android:id="@+id/heightInchesInput"
-                    android:layout_width="55sp"
+                    android:layout_width="75sp"
                     android:layout_height="wrap_content"
                     android:inputType="number|none"
                     android:maxLength="2"
                     android:digits="0123456789"
+                    android:imeOptions="actionDone"
                     android:hint="Inches"/>
             </LinearLayout>
 
@@ -159,11 +170,11 @@
         android:layout_alignParentBottom="true">
 
         <android.support.v7.widget.AppCompatTextView
-            android:id="@+id/nextButton"
+            android:id="@+id/submitButton"
             style="@style/Widget.AppCompat.Button.Borderless.Colored"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="NEXT"
+            android:text="SUBMIT"
             android:textColor="#ffff"
             />
     </LinearLayout>

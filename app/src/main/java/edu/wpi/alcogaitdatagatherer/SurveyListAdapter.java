@@ -19,6 +19,7 @@ public class SurveyListAdapter extends BaseAdapter {
 
     private LayoutInflater inflater;
     private LinkedList<File> files;
+    private static LinkedList<String> savedIDs;
 
     private class ViewHolder {
         TextView fileIDTextView;
@@ -28,6 +29,7 @@ public class SurveyListAdapter extends BaseAdapter {
     public SurveyListAdapter(Context context, LinkedList<File> files) {
         inflater = LayoutInflater.from(context);
         this.files = files;
+        savedIDs = new LinkedList<>();
     }
 
     public int getCount() {
@@ -56,10 +58,11 @@ public class SurveyListAdapter extends BaseAdapter {
 
         File file = files.get(position);
         String fileName = file.getName();
-        String fileShouldStartWith = "ID_";
-        String fileShouldEndWith = ".csv";
+        String fileShouldStartWith = HomeActivity.FILE_SHOULD_START_WITH;
+        String fileShouldEndWith = HomeActivity.FILE_SHOULD_END_WITH;
 
-        String ID = fileName.substring(fileShouldStartWith.length(), fileName.length() - fileShouldEndWith.length());
+        String ID = fileName.substring(fileShouldStartWith.length(), fileName.length() - fileShouldEndWith.length()).trim();
+        savedIDs.add(ID);
 
         SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy   hh:mm a");
         String lastDateModified = sdf.format(file.lastModified());
@@ -67,5 +70,9 @@ public class SurveyListAdapter extends BaseAdapter {
         holder.fileIDTextView.setText("Subject ID " + ID);
         holder.dateModifiedTextView.setText(lastDateModified);
         return convertView;
+    }
+
+    public static LinkedList<String> getSavedIDs() {
+        return savedIDs;
     }
 }
