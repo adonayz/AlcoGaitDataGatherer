@@ -1,0 +1,65 @@
+<android.support.wear.widget.BoxInsetLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="5dp"
+        app:boxedEdges="all">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:layout_gravity="center">
+
+            <TextView
+                android:id="@+id/instruction"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="@string/walk_instructions_detail"
+                android:textAlignment="center"/>
+
+            <LinearLayout
+                android:id="@+id/bacInfoLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView
+                    android:gravity="center"
+                    android:layout_height="wrap_content"
+                    android:layout_width="match_parent"
+                    android:text="Enter BAC : "
+                    android:textColor="@color/colorAccent"/>
+
+                <EditText
+                    android:id="@+id/bacInput"
+                    android:layout_width="100sp"
+                    android:textSize="14sp"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal"
+                    android:hint="e.g. 0.4" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/countdown"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:visibility="gone"/>
+
+            <ImageButton
+                android:id="@+id/startStopButton"
+                android:background="@null"
+                android:layout_height="50sp"
+                android:layout_width="50sp"
+                android:src="@drawable/ic_play_action"
+                android:layout_gravity="center"/>
+        </LinearLayout>
+
+    </FrameLayout>
+</android.support.wear.widget.BoxInsetLayout>

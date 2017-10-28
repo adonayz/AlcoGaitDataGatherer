@@ -12,6 +12,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:allowBackup="true"
@@ -42,8 +43,8 @@
         </activity>
         <activity
             android:name=".DataGatheringActivity"
-            android:screenOrientation="portrait"
-            android:parentActivityName=".SurveyFormActivity">
+            android:parentActivityName=".SurveyFormActivity"
+            android:screenOrientation="portrait">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".SurveyFormActivity" />

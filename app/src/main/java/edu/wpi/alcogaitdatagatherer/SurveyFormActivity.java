@@ -3,11 +3,14 @@ package edu.wpi.alcogaitdatagatherer;
 import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatTextView;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
@@ -15,11 +18,21 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.RadioButton;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.wearable.MessageApi;
+import com.google.android.gms.wearable.Node;
+import com.google.android.gms.wearable.NodeApi;
+import com.google.android.gms.wearable.Wearable;
+
 import java.util.Calendar;
 
-public class SurveyFormActivity extends AppCompatActivity {
+public class SurveyFormActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
 
     private boolean isIDUnavailable;
+    private GoogleApiClient mGoogleApiClient;
+    public static final String WEAR_HOME_ACTIVITY_PATH = "/start/WearHomeActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -128,6 +141,16 @@ public class SurveyFormActivity extends AppCompatActivity {
                     Intent intent = new Intent(SurveyFormActivity.this, DataGatheringActivity.class);
                     intent.putExtra("test_subject", testSubject);
                     startActivity(intent);
+
+                    Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).setResultCallback(new ResultCallback<NodeApi.GetConnectedNodesResult>() {
+                        @Override
+                        public void onResult(NodeApi.GetConnectedNodesResult getConnectedNodesResult) {
+                            for (Node node : getConnectedNodesResult.getNodes()) {
+                                sendMessage(node.getId());
+                            }
+                        }
+                    });
+
                 }
             }
         });
@@ -147,6 +170,13 @@ public class SurveyFormActivity extends AppCompatActivity {
                         WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
             }
         });
+
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(Wearable.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
+        mGoogleApiClient.connect();
     }
 
     @Override
@@ -161,4 +191,32 @@ public class SurveyFormActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        Log.d("GoogleApi", "onConnected: " + bundle);
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        Log.d("GoogleApi", "onConnectionSuspended: " + i);
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        Log.d("GoogleApi", "onConnectionFailed: " + connectionResult);
+    }
+
+
+    private void sendMessage(String node) {
+        Wearable.MessageApi.sendMessage(mGoogleApiClient , node , WEAR_HOME_ACTIVITY_PATH , new byte[0]).setResultCallback(new ResultCallback<MessageApi.SendMessageResult>() {
+            @Override
+            public void onResult(MessageApi.SendMessageResult sendMessageResult) {
+                if (!sendMessageResult.getStatus().isSuccess()) {
+                    Log.e("GoogleApi", "Failed to send message with status code: "
+                            + sendMessageResult.getStatus().getStatusCode());
+                }
+            }
+        });
+    }
 }

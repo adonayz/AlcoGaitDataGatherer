@@ -13,13 +13,20 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
+import android.widget.Toast;
+
+import com.box.androidsdk.content.BoxApiFile;
+import com.box.androidsdk.content.BoxApiFolder;
+import com.box.androidsdk.content.BoxConfig;
+import com.box.androidsdk.content.auth.BoxAuthentication;
+import com.box.androidsdk.content.models.BoxSession;
 
 import java.io.File;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 
-public class HomeActivity extends AppCompatActivity {
+public class HomeActivity extends AppCompatActivity implements BoxAuthentication.AuthListener{
 
     private SurveyListAdapter surveyListAdapter;
     private ListView surveyListView;
@@ -27,6 +34,16 @@ public class HomeActivity extends AppCompatActivity {
     static final String FILE_SHOULD_START_WITH = "ID_";
     static final String FILE_SHOULD_END_WITH = ".csv";
     private static final int READ_WRITE_PERMISSION_CODE = 1000;
+
+    private static final String CLIENT_ID = "jqkqfexx2sdtk8fd145dwfexr851drh3";
+    private static final String CLIENT_SECRET = "NjaaG4NrOjCFFpvRn2gSFr5YtEuiReCl";
+    private static final String REDIRECT_URI = "https://localhost";
+
+    private BoxSession boxSession;
+    private BoxSession oldBoxSession;
+
+    private BoxApiFolder mFolderApi;
+    private BoxApiFile mFileApi;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,18 +58,29 @@ public class HomeActivity extends AppCompatActivity {
 
         readFiles();
 
-        surveyListAdapter = new SurveyListAdapter(this, surveyFiles);
+        surveyListAdapter = new SurveyListAdapter(this, surveyFiles, surveyListView);
 
         surveyListView.setAdapter(surveyListAdapter);
 
         requestPermissions();
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.aab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        configureBoxClient();
+        initializeBoxSession();
+
+        FloatingActionButton aab = (FloatingActionButton) findViewById(R.id.aab);
+        aab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(HomeActivity.this, SurveyFormActivity.class);
                 startActivity(intent);
+            }
+        });
+
+        FloatingActionButton uab = (FloatingActionButton) findViewById(R.id.uab);
+        uab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                surveyListAdapter.syncWithBox(mFileApi);
             }
         });
     }
@@ -149,4 +177,69 @@ public class HomeActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+    private void configureBoxClient(){
+        BoxConfig.CLIENT_ID = CLIENT_ID;
+        BoxConfig.CLIENT_SECRET = CLIENT_SECRET;
+        BoxConfig.REDIRECT_URL = REDIRECT_URI;
+    }
+
+    private void initializeBoxSession(){
+        boxSession = new BoxSession(this);
+        boxSession.setSessionAuthListener(this);
+        boxSession.authenticate(this);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(resultCode == 0){
+
+        }
+    }
+
+    @Override
+    public void onRefreshed(BoxAuthentication.BoxAuthenticationInfo info) {
+    }
+
+    @Override
+    public void onAuthCreated(BoxAuthentication.BoxAuthenticationInfo info) {
+        mFolderApi = new BoxApiFolder(boxSession);
+        mFileApi = new BoxApiFile(boxSession);
+        //loadRootFolder();
+    }
+
+    @Override
+    public void onAuthFailure(BoxAuthentication.BoxAuthenticationInfo info, Exception ex) {
+        if (ex != null) {
+            //clearAdapter();
+        } else if (info == null && oldBoxSession != null) {
+            boxSession = oldBoxSession;
+            boxSession.setSessionAuthListener(this);
+            oldBoxSession = null;
+            onAuthCreated(boxSession.getAuthInfo());
+        }
+    }
+
+    @Override
+    public void onLoggedOut(BoxAuthentication.BoxAuthenticationInfo info, Exception ex) {
+        //clearAdapter();
+        initializeBoxSession();
+    }
+
+    private void showToast(final String text) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(HomeActivity.this, text, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        readFiles();
+        surveyListAdapter.notifyDataSetChanged();
+    }
+
 }

@@ -52,8 +52,11 @@ public class Walk {
 
         String[] walkInformation = {"Walk Number " + walkNumber, "BAC = " + BAC};
 
+        String[] tableHeader = {"Sensor Name", "X", "Y", "Z", "Timestamp"};
+
         csvFormat.add(walkInformation);
         csvFormat.add(space);
+        csvFormat.add(tableHeader);
         csvFormat.addAll(sensorDataList);
 
         return csvFormat;

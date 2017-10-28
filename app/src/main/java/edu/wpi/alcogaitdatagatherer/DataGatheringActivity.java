@@ -52,10 +52,8 @@ public class DataGatheringActivity extends AppCompatActivity {
         testSubject= (TestSubject) prevIntent.getSerializableExtra("test_subject");
 
         TextView title = (TextView) findViewById(R.id.title);
-        title.setText("Walk in a straight line");
 
         TextView text = (TextView) findViewById(R.id.summary);
-        text.setText("Walk for 1 minute. 30 seconds forward and 30 seconds back. The phone will beep and vibrate at the 30 second mark.");
 
         final TextView countdown = (TextView) findViewById(R.id.countdown);
         countdown.setText(Integer.toString(RECORD_TIME_IN_SECONDS));

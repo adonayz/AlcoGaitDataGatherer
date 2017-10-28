@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--  Single List Item Design -->
+
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    xmlns:custom="http://schemas.android.com/apk/res-auto">
+
+    <LinearLayout
+        android:id="@+id/fileInfoLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+        <TextView
+            android:id="@+id/fileIDTextView"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:textSize="16sp"
+            android:textStyle="bold" >
+        </TextView>
+
+        <TextView
+            android:id="@+id/dateModifiedTextView"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:textSize="12sp"
+            android:textColor="#808080">
+        </TextView>
+    </LinearLayout>
+
+    <com.github.lzyzsd.circleprogress.DonutProgress
+        android:id="@+id/fileUploadProgressBar"
+        android:layout_alignParentEnd="true"
+        android:layout_width="35sp"
+        android:layout_height="35sp"
+        custom:donut_progress="0"
+        custom:donut_finished_color="@color/colorAccent"
+        custom:donut_text_color="@color/colorAccent"
+        custom:donut_text_size="11sp"
+        custom:donut_finished_stroke_width="2sp"
+        custom:donut_unfinished_stroke_width="2sp"
+        android:visibility="gone"/>
+
+</merge>

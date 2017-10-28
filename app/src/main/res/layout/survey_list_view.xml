@@ -1,24 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--  Single List Item Design -->
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:padding="12sp"
-    android:orientation="vertical">
-    <TextView
-        android:id="@+id/fileIDTextView"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:textSize="16sp"
-        android:textStyle="bold" >
-    </TextView>
+    android:padding="12sp">
 
-    <TextView
-        android:id="@+id/dateModifiedTextView"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:textSize="12sp"
-        android:textColor="#808080">
-    </TextView>
-</LinearLayout>
+    <edu.wpi.alcogaitdatagatherer.CustomSurveyView
+        android:id="@+id/customSurveyView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+</RelativeLayout>

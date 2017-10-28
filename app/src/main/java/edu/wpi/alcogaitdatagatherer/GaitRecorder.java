@@ -91,7 +91,7 @@ public class GaitRecorder implements SensorEventListener {
             String sensorName = sensorEvent.sensor.getName();
             Date date = new Date();
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
-            String gaitData[] = {sensorName, " X: " + sensorEvent.values[0], " Y: " + sensorEvent.values[1], " Z: " + sensorEvent.values[2], simpleDateFormat.format(date)};
+            String gaitData[] = {sensorName, String.valueOf(sensorEvent.values[0]), String.valueOf(sensorEvent.values[1]), String.valueOf(sensorEvent.values[2]), simpleDateFormat.format(date)};
 
             walk.addSensorData(gaitData);
         }
@@ -139,7 +139,7 @@ public class GaitRecorder implements SensorEventListener {
         };
 
         builder.setTitle("Confirm Walk");
-        builder.setMessage("Do you want to keep data from this walk? (" + walk.getSensorDataList().size() + " results) If you choose 'No' you will repeat this walk. \n(Walk Number " + (currentWalkNumber) + ")").setPositiveButton("Yes", dialogClickListener)
+        builder.setMessage("Do you want to keep data from this walk? (" + walk.getSensorDataList().size() + " samples) If you choose 'No' you will repeat this walk. \n(Walk Number " + (currentWalkNumber) + ")").setPositiveButton("Yes", dialogClickListener)
                 .setNegativeButton("No", dialogClickListener).show();
 
     }
@@ -241,10 +241,11 @@ public class GaitRecorder implements SensorEventListener {
         @Override
         protected void onPreExecute(){
             super.onPreExecute();
-            dialog.setMessage("Saving data to " + mFileName);
+            dialog.setTitle("Saving data to " + mFileName);
             dialog.setIndeterminate(false);
             dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
             dialog.setProgress(0);
+            dialog.setMax(testSubject.getAllWalksFromSubject().size());
             dialog.show();
             window.setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
                     WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
@@ -272,11 +273,12 @@ public class GaitRecorder implements SensorEventListener {
                 writer.writeNext(testSubjectTitle);
                 writer.writeNext(testSubjectInformation);
                 writer.writeNext(space);
-                writer.writeNext(space);
 
-                for (Walk aWalk: currentTestSubject.getAllWalksFromSubject()){
+                LinkedList<Walk> allWalks = currentTestSubject.getAllWalksFromSubject();
 
-                    for (String[] data : aWalk.toCSVFormat()) {
+                for (int i = 0; i < allWalks.size(); i++){
+                    publishProgress(i);
+                    for (String[] data : allWalks.get(i).toCSVFormat()) {
                         writer.writeNext(data);
                     }
 
@@ -300,6 +302,7 @@ public class GaitRecorder implements SensorEventListener {
         @Override
         protected void onProgressUpdate(Integer... values) {
             dialog.setProgress(values[0]);
+            dialog.setMessage("Saving Walk" + (values[0] + 1));
         }
 
         @Override
