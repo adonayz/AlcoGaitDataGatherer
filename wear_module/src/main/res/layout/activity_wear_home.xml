@@ -38,15 +38,17 @@
 
                 <EditText
                     android:id="@+id/bacInput"
-                    android:layout_width="100sp"
+                    android:layout_width="80sp"
                     android:textSize="14sp"
                     android:layout_height="wrap_content"
                     android:inputType="numberDecimal"
-                    android:hint="e.g. 0.4" />
+                    android:hint="e.g. 0.4"
+                    android:backgroundTint="@color/colorAccent"/>
             </LinearLayout>
 
             <TextView
                 android:id="@+id/countdown"
+                android:textSize="30sp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -57,7 +59,7 @@
                 android:background="@null"
                 android:layout_height="50sp"
                 android:layout_width="50sp"
-                android:src="@drawable/ic_play_action"
+                android:src="@drawable/ic_action_start"
                 android:layout_gravity="center"/>
         </LinearLayout>
 
