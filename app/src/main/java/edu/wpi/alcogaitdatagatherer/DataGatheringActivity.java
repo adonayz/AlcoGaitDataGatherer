@@ -6,8 +6,12 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
+import android.graphics.Paint;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Vibrator;
@@ -23,13 +27,22 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowManager;
+import android.view.animation.AlphaAnimation;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.wearable.DataEvent;
+import com.google.android.gms.wearable.DataEventBuffer;
+import com.google.android.gms.wearable.DataItem;
+import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Node;
@@ -38,9 +51,13 @@ import com.google.android.gms.wearable.Wearable;
 
 import java.io.File;
 
+import edu.wpi.alcogaitdatagatherercommon.CommonValues;
 import it.sephiroth.android.library.tooltip.Tooltip;
 
-public class DataGatheringActivity extends AppCompatActivity implements MessageApi.MessageListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
+import static android.view.View.LAYER_TYPE_HARDWARE;
+import static android.view.View.LAYER_TYPE_NONE;
+
+public class DataGatheringActivity extends AppCompatActivity implements MessageApi.MessageListener, DataApi.DataListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
 
     // Android Layout Variables
     private TextView countdownTextField;
@@ -53,16 +70,18 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
     private AppCompatTextView reDoWalkButton;
     private AppCompatTextView saveButton;
     private TextView walkLogDisplay;
+    private FrameLayout progressBarHolder;
+    private LinearLayout bottomBarLayout;
+
+    private AlphaAnimation inAnimation;
+    private AlphaAnimation outAnimation;
 
     private String mFilename;
     private CountDownTimer countDownTimer;
-    private GaitRecorder gaitRecorder;
-    private boolean isRecording = false;
-    private final int RECORD_TIME_IN_SECONDS= 60;
+    private SensorRecorder sensorRecorder;
     private TestSubject testSubject;
-    private Double BAC;
     private GoogleApiClient mGoogleApiClient;
-    public static final String WEAR_HOME_ACTIVITY_PATH = "/start/WearHomeActivity";
+    private boolean isWearableConnected = false;
     private static final int READ_WRITE_PERMISSION_CODE = 1000;
 
     @Override
@@ -84,10 +103,13 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
 
         prepareStorageFile();
 
-        gaitRecorder = new GaitRecorder(this, mFilename, testSubject, walkNumberDisplay, walkLogDisplay);
-        gaitRecorder.registerListeners();
+        sensorRecorder = new SensorRecorder(this, mFilename, testSubject, walkNumberDisplay, walkLogDisplay);
 
         connecClientForWearable();
+
+        startProgressBar();
+
+        setupTimer();
     }
 
     private void initViews(){
@@ -95,7 +117,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
         //TextView text = (TextView) findViewById(R.id.summary);
 
         countdownTextField = (TextView) findViewById(R.id.countdown);
-        countdownTextField.setText(Integer.toString(RECORD_TIME_IN_SECONDS));
+        countdownTextField.setText(Integer.toString(CommonValues.RECORD_TIME_IN_SECONDS));
         countdown_title = (TextView) findViewById(R.id.countdown_title);
         startButton = (Button) findViewById(R.id.start_recording);
         stopButton = (Button) findViewById(R.id.stop_recording);
@@ -106,6 +128,9 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
         saveButton = (AppCompatTextView) findViewById(R.id.saveButton);
         walkLogDisplay = (TextView) findViewById(R.id.walkLogDisplay);
         walkLogDisplay.setMovementMethod(new ScrollingMovementMethod());
+        progressBarHolder = (FrameLayout) findViewById(R.id.progressBarHolder);
+        bottomBarLayout = (LinearLayout) findViewById(R.id.bottomBar);
+        disableBar(true);
     }
 
     private void configureButtons(){
@@ -115,7 +140,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
                 if(bacInput.getText().toString().trim().isEmpty()){
                     bacInput.setError("Please enter BAC data.");
                 }else{
-                    startRecording();
+                    startRecording(bacInput.getText().toString().trim(), false);
                 }
             }
         });
@@ -130,15 +155,15 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
         restartButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                gaitRecorder.restartDataCollection(bacInput);
-                countDownTimer.onTick(RECORD_TIME_IN_SECONDS * 1000);
+                sensorRecorder.restartDataCollection(bacInput);
+                countDownTimer.onTick(CommonValues.RECORD_TIME_IN_SECONDS * 1000);
             }
         });
 
         reDoWalkButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                gaitRecorder.reDoWalk(bacInput);
+                sensorRecorder.reDoWalk(bacInput);
             }
         });
 
@@ -153,7 +178,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
                         switch (which){
                             case DialogInterface.BUTTON_POSITIVE:
                                 Window window = getWindow();
-                                gaitRecorder.writeToCSV(window);
+                                sensorRecorder.writeToCSV(window);
                                 break;
 
                             case DialogInterface.BUTTON_NEGATIVE:
@@ -180,7 +205,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
 
     private void setupTimer(){
         // 4
-        countDownTimer = new CountDownTimer(RECORD_TIME_IN_SECONDS * 1000, 1000) {
+        countDownTimer = new CountDownTimer(CommonValues.RECORD_TIME_IN_SECONDS * 1000, 1000) {
 
             // 5
             public void onTick(long millisUntilFinished) {
@@ -196,71 +221,93 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
 
             // 6
             public void onFinish() {
+                ToneGenerator toneGen1 = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
+                toneGen1.startTone(ToneGenerator.TONE_CDMA_ONE_MIN_BEEP,1000);
+                Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                v.vibrate(1000);
                 stopRecording();
             }
         };
     }
 
-    private void startRecording(){
-        if(!isRecording){
-            isRecording = true;
+    private void startRecording(String bacInputText, boolean isActionFromWearable){
+        if(!sensorRecorder.isRecording()){
+            if(!isActionFromWearable){
+                notifyWearableActivity(CommonValues.START_RECORDING_PATH, bacInputText);
+            }
 
-            BAC = Double.valueOf(bacInput.getText().toString().trim());
+            Double BAC = Double.valueOf(bacInputText);
 
-            gaitRecorder.startRecording(BAC);
+            if(isActionFromWearable){
+                bacInput.setText(bacInputText);
+            }
+
+            sensorRecorder.startRecording(BAC);
 
             startButton.setVisibility(View.GONE);
             stopButton.setVisibility(View.VISIBLE);
             bacInput.setEnabled(false);
             countdown_title.setVisibility(View.VISIBLE);
             walkNumberDisplay.setVisibility(View.VISIBLE);
-            restartButton.setEnabled(false);
-            reDoWalkButton.setEnabled(false);
-            saveButton.setEnabled(false);
-
-            setupTimer();
+            disableBar(true);
 
             countDownTimer.start();
         }
     }
 
     private void stopRecording(){
-        if(isRecording){
-            isRecording = false;
+        if(sensorRecorder.isRecording()){
+            notifyWearableActivity(CommonValues.WEAR_MESSAGE_PATH, CommonValues.STOP_RECORDING);
 
             countdown_title.setVisibility(View.GONE);
             startButton.setVisibility(View.VISIBLE);
             stopButton.setVisibility(View.GONE);
 
-            countDownTimer.cancel();
-            countDownTimer.onTick(RECORD_TIME_IN_SECONDS * 1000);
-
-            gaitRecorder.stopRecording(bacInput);
+            sensorRecorder.stopRecording(bacInput);
 
             bacInput.setEnabled(true);
             createToolTip(bacInput, Tooltip.Gravity.RIGHT, "Updated BAC for next walk");
-            restartButton.setEnabled(true);
-            reDoWalkButton.setEnabled(true);
-            saveButton.setEnabled(true);
+            disableBar(false);
+
+            countDownTimer.cancel();
+            setupTimer();
         }
     }
 
     @Override
     protected void onResume(){
         super.onResume();
-        gaitRecorder.registerListeners();
+        sensorRecorder.registerListeners();
     }
 
     @Override
     protected void onPause(){
         super.onPause();
-        gaitRecorder.unregisterListeners();
+        sensorRecorder.unregisterListeners();
     }
 
     @Override
     protected void onStop(){
+        sensorRecorder.unregisterListeners();
+        notifyWearableActivity(CommonValues.WEAR_MESSAGE_PATH, CommonValues.WEARABLE_DISCONNECTED);
+        notifyWearableActivity(CommonValues.WEAR_HOME_ACTIVITY_PATH, CommonValues.STOP_APP);
+
+        if (null != mGoogleApiClient && mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.disconnect();
+        }
+
         super.onStop();
-        gaitRecorder.unregisterListeners();
+    }
+
+    @Override
+    protected void onDestroy(){
+        sensorRecorder.unregisterListeners();
+        notifyWearableActivity(CommonValues.WEAR_MESSAGE_PATH, CommonValues.WEARABLE_DISCONNECTED);
+        notifyWearableActivity(CommonValues.WEAR_HOME_ACTIVITY_PATH, CommonValues.DESTROY_APP);
+        if (null != mGoogleApiClient && mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.disconnect();
+        }
+        super.onDestroy();
     }
 
     /**
@@ -326,51 +373,6 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
         mGoogleApiClient.connect();
     }
 
-    private void openWearableActivity(){
-        //Open Wearable Activity
-        Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).setResultCallback(new ResultCallback<NodeApi.GetConnectedNodesResult>() {
-            @Override
-            public void onResult(NodeApi.GetConnectedNodesResult getConnectedNodesResult) {
-                for (Node node : getConnectedNodesResult.getNodes()) {
-                    sendOpenInstruction(node.getId());
-                }
-            }
-        });
-    }
-
-    private void sendOpenInstruction(String node) {
-        Wearable.MessageApi.sendMessage(mGoogleApiClient , node , WEAR_HOME_ACTIVITY_PATH , new byte[0]).setResultCallback(new ResultCallback<MessageApi.SendMessageResult>() {
-            @Override
-            public void onResult(MessageApi.SendMessageResult sendMessageResult) {
-                if (!sendMessageResult.getStatus().isSuccess()) {
-                    Log.e("GoogleApi", "Failed to send message with status code: "
-                            + sendMessageResult.getStatus().getStatusCode());
-                }
-            }
-        });
-    }
-
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
-        Log.d("GoogleApi", "onConnected: " + bundle);
-        openWearableActivity();
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-        Log.d("GoogleApi", "onConnectionSuspended: " + i);
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        Log.d("GoogleApi", "onConnectionFailed: " + connectionResult);
-    }
-
-    @Override
-    public void onMessageReceived(MessageEvent messageEvent) {
-
-    }
-
     private void notifyWearableActivity(final String path, final String text){
         new Thread( new Runnable() {
             @Override
@@ -385,8 +387,124 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
     }
 
     @Override
-    protected void onDestroy(){
-        super.onDestroy();
-        mGoogleApiClient.disconnect();
+    public void onConnected(@Nullable Bundle bundle) {
+        Wearable.MessageApi.addListener(mGoogleApiClient, this);
+        Wearable.DataApi.addListener(mGoogleApiClient, this);
+        Log.d("GoogleApi", "onConnected: " + bundle);
+        notifyWearableActivity(CommonValues.WEAR_HOME_ACTIVITY_PATH, CommonValues.OPEN_APP);
+        notifyWearableActivity(CommonValues.WEAR_MESSAGE_PATH, CommonValues.WEARABLE_CONNECTED);
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        Log.d("GoogleApi", "onConnectionSuspended: " + i);
+        /*Intent intent = new Intent(this, edu.wpi.alcogaitdatagatherer.SensorRecorder.class);
+        stopService(intent);*/
+        isWearableConnected = false;
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        Log.d("GoogleApi", "onConnectionFailed: " + connectionResult);
+        isWearableConnected = false;
+    }
+
+    @Override
+    public void onMessageReceived(final MessageEvent messageEvent) {
+        runOnUiThread( new Runnable() {
+            @Override
+            public void run() {
+                if(messageEvent.getPath().equalsIgnoreCase( CommonValues.WEAR_MESSAGE_PATH) ) {
+                    switch (new String(messageEvent.getData())){
+                        case CommonValues.STOP_RECORDING:
+                            stopRecording();
+                            break;
+                        case CommonValues.CONFIRM_WALK:
+                            break;
+                        case CommonValues.REDO_PREVIOUS_WALK:
+                            break;
+                        case CommonValues.RESTART_SURVEY:
+                            break;
+                        case CommonValues.SAVE_SURVEY:
+                            break;
+                        case CommonValues.WEARABLE_DISCONNECTED:
+                            isWearableConnected = false;
+                            break;
+                        case CommonValues.WEARABLE_CONNECTED:
+                            if(!isWearableConnected){
+                                isWearableConnected = true;
+                                stopProgressBar();
+                                showToast("Wearable Connected");
+                                notifyWearableActivity(CommonValues.WEAR_MESSAGE_PATH, CommonValues.WEARABLE_CONNECTED);
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }else if(messageEvent.getPath().equalsIgnoreCase(CommonValues.START_RECORDING_PATH)) {
+                    startRecording(new String(messageEvent.getData()),true);
+                }
+            }
+        });
+    }
+
+    private void startProgressBar(){
+        inAnimation = new AlphaAnimation(0f, 1f);
+        inAnimation.setDuration(200);
+        progressBarHolder.setAnimation(inAnimation);
+        progressBarHolder.setVisibility(View.VISIBLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+    }
+
+    private void stopProgressBar(){
+        outAnimation = new AlphaAnimation(1f, 0f);
+        outAnimation.setDuration(200);
+        progressBarHolder.setAnimation(outAnimation);
+        progressBarHolder.setVisibility(View.GONE);
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+    }
+
+    @Override
+    public void onDataChanged(DataEventBuffer dataEvents) {
+        if(sensorRecorder!= null && sensorRecorder.isRecording()){
+            for (DataEvent dataEvent : dataEvents) {
+                if (dataEvent.getType() == DataEvent.TYPE_CHANGED) {
+                    DataItem dataItem = dataEvent.getDataItem();
+                    Uri uri = dataItem.getUri();
+                    String path = uri.getPath();
+
+                    if (path.startsWith(CommonValues.SENSOR_PATH)) {
+                        sensorRecorder.addHeartRateData(
+                               uri.getLastPathSegment(),
+                                DataMapItem.fromDataItem(dataItem).getDataMap()
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+
+    private void showToast(final String text) {
+        Toast.makeText(this, text, Toast.LENGTH_LONG).show();
+    }
+
+    public void disableBar(boolean disableBar) {
+        if (disableBar) {
+            ColorMatrix cm = new ColorMatrix();
+            cm.setSaturation(50);
+            Paint greyscalePaint = new Paint();
+            greyscalePaint.setColorFilter(new ColorMatrixColorFilter(cm));
+            bottomBarLayout.setLayerType(LAYER_TYPE_HARDWARE, greyscalePaint);
+            for(int i = 0; i < bottomBarLayout.getChildCount(); i++){
+                bottomBarLayout.getChildAt(i).setEnabled(false);
+            }
+        } else {
+            bottomBarLayout.setLayerType(LAYER_TYPE_NONE, null);
+            for(int i = 0; i < bottomBarLayout.getChildCount(); i++){
+                bottomBarLayout.getChildAt(i).setEnabled(true);
+            }
+        }
     }
 }

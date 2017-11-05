@@ -10,16 +10,16 @@ import java.util.LinkedList;
 public class TestSubject implements Serializable {
     private String subjectID;
     private Gender gender;
-    private String birthDate;
+    private int age;
     private double weight;
     private int heightFeet;
     private int heightInches;
     private LinkedList<Walk> allWalksFromSubject;
 
-    public TestSubject(String subjectID, Gender gender, String birthDate, double weight, int heightFeet, int heightInches) {
+    public TestSubject(String subjectID, Gender gender, int age, double weight, int heightFeet, int heightInches) {
         this.subjectID = subjectID;
         this.gender = gender;
-        this.birthDate = birthDate;
+        this.age = age;
         this.weight = weight;
         this.heightFeet = heightFeet;
         this.heightInches = heightInches;
@@ -34,8 +34,8 @@ public class TestSubject implements Serializable {
         return gender;
     }
 
-    public String getBirthDate() {
-        return birthDate;
+    public int getAge() {
+        return age;
     }
 
     public double getWeight() {

@@ -3,5 +3,5 @@
     <string name="action_settings">Settings</string>
     <string name="title_activity_settings">Settings</string>
     <string name="walk_instructions_title">Walk in a straight line</string>
-    <string name="walk_instructions_detail">Walk for 1 minute, 30 seconds forward, turn around and walk 30 seconds back. The phone will beep and vibrate at the 30 second mark.</string>
+    <string name="walk_instructions_detail">Walk for 1 minute, 30 seconds forward, turn around and walk 30 seconds back. The phone will beep and vibrate at the 30 second and 1 minute mark.</string>
 </resources>

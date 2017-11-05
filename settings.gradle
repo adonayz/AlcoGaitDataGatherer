@@ -1,1 +1,2 @@
-include ':app', ':wear_module'
+include ':app', ':wear'
+include ':common'

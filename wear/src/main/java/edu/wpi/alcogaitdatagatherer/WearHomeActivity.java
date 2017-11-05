@@ -110,7 +110,6 @@ public class WearHomeActivity extends WearableActivity implements MessageApi.Mes
     @Override
     protected void onResume() {
         super.onResume();
-        registerSensorListeners();
     }
 
     @Override
@@ -121,13 +120,12 @@ public class WearHomeActivity extends WearableActivity implements MessageApi.Mes
 
     @Override
     protected void onStop() {
-
-        if (null != mGoogleApiClient && mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.disconnect();
-        }
         super.onStop();
         unregisterSensorListeners();
         notifyMobile(CommonValues.WEAR_MESSAGE_PATH, CommonValues.WEARABLE_DISCONNECTED);
+        if (null != mGoogleApiClient && mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.disconnect();
+        }
 
     }
 
@@ -136,6 +134,9 @@ public class WearHomeActivity extends WearableActivity implements MessageApi.Mes
         super.onDestroy();
         unregisterSensorListeners();
         notifyMobile(CommonValues.WEAR_MESSAGE_PATH, CommonValues.WEARABLE_DISCONNECTED);
+        if (null != mGoogleApiClient && mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.disconnect();
+        }
     }
 
     private void setupSensors(){
@@ -217,7 +218,7 @@ public class WearHomeActivity extends WearableActivity implements MessageApi.Mes
             }
             prevBACInput = bacInputText;
             startAndStopButton.setImageResource(R.drawable.ic_action_stop);
-            instructionTextView.setText(R.string.instructions_while_recording);
+            instructionTextView.setText(R.string.instructions_recording_before_30_seconds);
             bacInfoLayout.setVisibility(View.GONE);
             countdownTextView.setVisibility(View.VISIBLE);
             countDownTimer.start();
@@ -263,6 +264,7 @@ public class WearHomeActivity extends WearableActivity implements MessageApi.Mes
                     toneGen1.startTone(ToneGenerator.TONE_CDMA_ONE_MIN_BEEP,1000);
                     Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
                     v.vibrate(1000);
+                    instructionTextView.setText(R.string.instructions_recording_after_30_seconds);
                 }
             }
 
@@ -311,6 +313,13 @@ public class WearHomeActivity extends WearableActivity implements MessageApi.Mes
                        case CommonValues.RESTART_SURVEY:
                            break;
                        case CommonValues.SAVE_SURVEY:
+                           break;
+
+                       case CommonValues.STOP_APP:
+                           onStop();
+                           break;
+                       case CommonValues.DESTROY_APP:
+                           onDestroy();
                            break;
                        case CommonValues.WEARABLE_DISCONNECTED:
                            isPhoneConnected = false;
@@ -418,7 +427,6 @@ public class WearHomeActivity extends WearableActivity implements MessageApi.Mes
                 } else {
                     // permission denied by user. disable
                 }
-                return;
             }
         }
     }
