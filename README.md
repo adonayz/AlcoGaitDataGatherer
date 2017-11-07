@@ -1,0 +1,2 @@
+# AlcoGaitDataGatherer
+A collaborated research application between Brown University and WPI. It collects gait (walking behavior) data from 250 test subjects using the phone’s sensors. Subjects will be drinking throughout the experiment and the application will record the data at various BAC ranges. Data will be analyzed through machine learning algorithms in order to study the relationship between movement patterns and alcohol intoxication.
