@@ -60,7 +60,6 @@ public class SensorRecorder implements SensorEventListener{
     private int currentWalkNumber;
     private String TAG = "SensorRecorder";
     private DialogInterface.OnClickListener dialogClickListener;
-    private boolean isInDialogMode = false;
 
     SensorRecorder(DataGatheringActivity gatheringActivity, String mFileName, TestSubject testSubject, TextView walkNumberDisplay, TextView walkLogDisplay) {
         this.gatheringActivity = gatheringActivity;
@@ -119,12 +118,17 @@ public class SensorRecorder implements SensorEventListener{
         walk = new Walk(currentWalkNumber, BAC);
     }
 
-    void stopRecording(final EditText bacInput) {
+    void stopRecording() {
         isRecording = false;
         unregisterListeners();
         walkLogDisplay.setVisibility(View.VISIBLE);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(gatheringActivity);
+        testSubject.addWalk(walk);
+        updateWalkLogDisplay();
+        currentWalkNumber++;
+        updateWalkNumberDisplay();
+
+        /*AlertDialog.Builder builder = new AlertDialog.Builder(gatheringActivity);
 
         dialogClickListener = new DialogInterface.OnClickListener() {
             @Override
@@ -149,13 +153,12 @@ public class SensorRecorder implements SensorEventListener{
 
         builder.setTitle("Confirm Walk");
         builder.setMessage("Do you want to keep data from this walk? (" + walk.getSampleSize() + " samples) If you choose 'No' you will repeat this walk. \n(Walk Number " + (currentWalkNumber) + ")").setPositiveButton("Yes", dialogClickListener)
-                .setNegativeButton("No", dialogClickListener).show();
+                .setNegativeButton("No", dialogClickListener).show();*/
     }
 
     public void writeToCSV(final Window window) {
         this.window = window;
         new SaveDataToCSVTask().execute(testSubject);
-
     }
 
     private void updateWalkNumberDisplay(){
@@ -351,6 +354,10 @@ public class SensorRecorder implements SensorEventListener{
 
     public boolean isRecording(){
         return isRecording;
+    }
+
+    public TestSubject getTestSubject() {
+        return testSubject;
     }
 
     private void showToast(final String text) {

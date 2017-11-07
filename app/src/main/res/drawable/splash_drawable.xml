@@ -3,7 +3,7 @@
 
 
     <item
-        android:drawable="@color/splashBackground"/>
+        android:drawable="@color/white"/>
 
     <item>
         <bitmap

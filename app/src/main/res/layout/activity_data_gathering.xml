@@ -136,45 +136,42 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/bottomBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="right"
+        android:gravity="end"
         android:background="@color/colorPrimary"
         android:layout_alignParentBottom="true">
 
         <RelativeLayout
+            android:id="@+id/bottomBar"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content">
             <android.support.v7.widget.AppCompatTextView
                 android:id="@+id/restartButton"
-                style="@style/Widget.AppCompat.Button.Borderless.Colored"
+                style="@style/AppCompatBarStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="RESTART"
-                android:textColor="#ffff"
                 android:layout_alignParentStart="true"
                 android:clickable="false"
                 />
 
             <android.support.v7.widget.AppCompatTextView
                 android:id="@+id/redoWalkButton"
-                style="@style/Widget.AppCompat.Button.Borderless.Colored"
+                style="@style/AppCompatBarStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="RE-DO PREV WALK"
-                android:textColor="#ffff"
                 android:layout_centerHorizontal="true"
                 android:clickable="false"
                 />
 
             <android.support.v7.widget.AppCompatTextView
                 android:id="@+id/saveButton"
-                style="@style/Widget.AppCompat.Button.Borderless.Colored"
+                style="@style/AppCompatBarStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="SAVE"
-                android:textColor="#ffff"
                 android:layout_alignParentEnd="true"
                 android:clickable="false"
                 />
@@ -212,5 +209,10 @@
                 android:textSize="20sp"/>
         </LinearLayout>
     </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/fragment_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
 </RelativeLayout>

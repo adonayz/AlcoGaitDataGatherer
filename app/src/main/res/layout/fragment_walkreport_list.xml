@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:name="edu.wpi.alcogaitdatagatherer.WalkReportFragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginTop="70sp"
+    android:layout_marginLeft="50sp"
+    android:layout_marginRight="50sp"
+    android:layout_marginBottom="50sp"
+    android:background="@drawable/fragment_background"
+    tools:context="edu.wpi.alcogaitdatagatherer.WalkReportFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <android.support.v7.widget.AppCompatTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/AppCompatBarStyle"
+            android:textColor="@color/white"
+            android:text="Report Walks"
+            android:background="@drawable/fragment_title_bar"/>
+
+        <android.support.v7.widget.RecyclerView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/recyclerViewList"
+            tools:listitem="@layout/fragment_walkreport"
+            app:layoutManager="LinearLayoutManager">
+        </android.support.v7.widget.RecyclerView>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="@drawable/fragment_bottom_bar"
+        android:orientation="horizontal"
+        android:weightSum="1">
+        <android.support.v7.widget.AppCompatTextView
+            android:layout_width="0sp"
+            style="@style/AppCompatBarStyle"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            android:text="Cancel"/>
+        <View
+            android:layout_width="0.5sp"
+            android:layout_height="match_parent"
+            android:background="@color/white"/>
+
+        <android.support.v7.widget.AppCompatTextView
+            android:layout_width="0sp"
+            style="@style/AppCompatBarStyle"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            android:text="Save"/>
+    </LinearLayout>
+</RelativeLayout>

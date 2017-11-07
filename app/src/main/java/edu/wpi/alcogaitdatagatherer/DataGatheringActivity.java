@@ -2,6 +2,8 @@ package edu.wpi.alcogaitdatagatherer;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -32,7 +34,7 @@ import android.view.animation.AlphaAnimation;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -57,7 +59,7 @@ import it.sephiroth.android.library.tooltip.Tooltip;
 import static android.view.View.LAYER_TYPE_HARDWARE;
 import static android.view.View.LAYER_TYPE_NONE;
 
-public class DataGatheringActivity extends AppCompatActivity implements MessageApi.MessageListener, DataApi.DataListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener{
+public class DataGatheringActivity extends AppCompatActivity implements MessageApi.MessageListener, DataApi.DataListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, WalkReportFragment.OnListFragmentInteractionListener {
 
     // Android Layout Variables
     private TextView countdownTextField;
@@ -71,7 +73,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
     private AppCompatTextView saveButton;
     private TextView walkLogDisplay;
     private FrameLayout progressBarHolder;
-    private LinearLayout bottomBarLayout;
+    private RelativeLayout bottomBarLayout;
 
     private AlphaAnimation inAnimation;
     private AlphaAnimation outAnimation;
@@ -83,6 +85,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
     private GoogleApiClient mGoogleApiClient;
     private boolean isWearableConnected = false;
     private static final int READ_WRITE_PERMISSION_CODE = 1000;
+    static final String TB_FOR_WALK_REPORT = "walk_report";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,7 +110,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
 
         connecClientForWearable();
 
-        startProgressBar();
+        //startProgressBar();
 
         setupTimer();
     }
@@ -129,7 +132,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
         walkLogDisplay = (TextView) findViewById(R.id.walkLogDisplay);
         walkLogDisplay.setMovementMethod(new ScrollingMovementMethod());
         progressBarHolder = (FrameLayout) findViewById(R.id.progressBarHolder);
-        bottomBarLayout = (LinearLayout) findViewById(R.id.bottomBar);
+        bottomBarLayout = (RelativeLayout) findViewById(R.id.bottomBar);
         disableBar(true);
     }
 
@@ -148,7 +151,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
         stopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                countDownTimer.onFinish();
+                stopRecording();
             }
         });
 
@@ -170,15 +173,19 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                requestPermissions();
-
                 DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         switch (which){
                             case DialogInterface.BUTTON_POSITIVE:
-                                Window window = getWindow();
-                                sensorRecorder.writeToCSV(window);
+                                WalkReportFragment walkReportFragment = new WalkReportFragment();
+                                Bundle bundle= walkReportFragment.getArguments();
+                                if(bundle == null){
+                                    bundle = new Bundle();
+                                }
+                                bundle.putSerializable(TB_FOR_WALK_REPORT, sensorRecorder.getTestSubject());
+                                walkReportFragment.setArguments(bundle);
+                                setFragment(walkReportFragment);
                                 break;
 
                             case DialogInterface.BUTTON_NEGATIVE:
@@ -189,8 +196,10 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
                 };
                 AlertDialog.Builder builder = new AlertDialog.Builder(DataGatheringActivity.this);
                 builder.setTitle("Save Walks");
-                builder.setMessage("Do you want to complete survey and save data to a CSV file?").setPositiveButton("Yes", dialogClickListener)
+                builder.setMessage("Do you want to complete survey and save data into internal storage?").setPositiveButton("Yes", dialogClickListener)
                         .setNegativeButton("No", dialogClickListener).show();
+
+
             }
         });
     }
@@ -232,14 +241,15 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
 
     private void startRecording(String bacInputText, boolean isActionFromWearable){
         if(!sensorRecorder.isRecording()){
+            Double BAC = Double.valueOf(bacInputText);
+            bacInput.setText(String.valueOf(BAC));
+
             if(!isActionFromWearable){
                 notifyWearableActivity(CommonValues.START_RECORDING_PATH, bacInputText);
             }
 
-            Double BAC = Double.valueOf(bacInputText);
-
             if(isActionFromWearable){
-                bacInput.setText(bacInputText);
+                bacInput.setText(String.valueOf(BAC));
             }
 
             sensorRecorder.startRecording(BAC);
@@ -263,10 +273,11 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
             startButton.setVisibility(View.VISIBLE);
             stopButton.setVisibility(View.GONE);
 
-            sensorRecorder.stopRecording(bacInput);
+            sensorRecorder.stopRecording();
 
+            bacInput.setText("");
             bacInput.setEnabled(true);
-            createToolTip(bacInput, Tooltip.Gravity.RIGHT, "Updated BAC for next walk");
+            createToolTip(bacInput, Tooltip.Gravity.RIGHT, "Update BAC for next walk");
             disableBar(false);
 
             countDownTimer.cancel();
@@ -335,7 +346,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
         ).show();
     }
 
-    public void requestPermissions(){
+    public void requestSave(){
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -348,6 +359,8 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
                         new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                         READ_WRITE_PERMISSION_CODE);
             }
+        }else{
+            showSaveDialog();
         }
 
     }
@@ -493,18 +506,74 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
     public void disableBar(boolean disableBar) {
         if (disableBar) {
             ColorMatrix cm = new ColorMatrix();
-            cm.setSaturation(50);
+            cm.setSaturation(0.5f);
             Paint greyscalePaint = new Paint();
             greyscalePaint.setColorFilter(new ColorMatrixColorFilter(cm));
             bottomBarLayout.setLayerType(LAYER_TYPE_HARDWARE, greyscalePaint);
             for(int i = 0; i < bottomBarLayout.getChildCount(); i++){
-                bottomBarLayout.getChildAt(i).setEnabled(false);
+                ((AppCompatTextView)bottomBarLayout.getChildAt(i)).setEnabled(false);
             }
         } else {
             bottomBarLayout.setLayerType(LAYER_TYPE_NONE, null);
             for(int i = 0; i < bottomBarLayout.getChildCount(); i++){
-                bottomBarLayout.getChildAt(i).setEnabled(true);
+                ((AppCompatTextView)bottomBarLayout.getChildAt(i)).setEnabled(true);
             }
         }
+    }
+
+    protected void setFragment(Fragment fragment) {
+        FragmentTransaction transaction = getFragmentManager().beginTransaction();
+
+// Replace whatever is in the fragment_container view with this fragment,
+// and add the transaction to the back stack
+        transaction.replace(R.id.fragment_container, fragment);
+        transaction.addToBackStack(null);
+
+// Commit the transaction
+        transaction.commit();
+    }
+
+    private void showSaveDialog(){
+        DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                switch (which){
+                    case DialogInterface.BUTTON_POSITIVE:
+                        Window window = getWindow();
+                        sensorRecorder.writeToCSV(window);
+                        break;
+
+                    case DialogInterface.BUTTON_NEGATIVE:
+                        //No button clicked
+                        break;
+                }
+            }
+        };
+        AlertDialog.Builder builder = new AlertDialog.Builder(DataGatheringActivity.this);
+        builder.setTitle("Save Walks");
+        builder.setMessage("Do you want to complete survey and save data into internal storage?").setPositiveButton("Yes", dialogClickListener)
+                .setNegativeButton("No", dialogClickListener).show();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case READ_WRITE_PERMISSION_CODE : {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    showSaveDialog();
+                } else {
+                    // permission denied by user. disable
+                }
+                return;
+            }
+        }
+    }
+
+    @Override
+    public void onListFragmentInteraction(Walk walk) {
+
     }
 }
