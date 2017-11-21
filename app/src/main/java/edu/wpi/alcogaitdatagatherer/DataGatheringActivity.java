@@ -218,15 +218,12 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
     }
 
     private void setupTimer(){
-        // 4
         countDownTimer = new CountDownTimer(CommonValues.RECORD_TIME_IN_SECONDS * 1000, 1000) {
 
-            // 5
             public void onTick(long millisUntilFinished) {
                 countdownTextField.setText(String.valueOf(millisUntilFinished / 1000));
             }
 
-            // 6
             public void onFinish() {
                 ToneGenerator toneGen1 = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
                 toneGen1.startTone(ToneGenerator.TONE_CDMA_ONE_MIN_BEEP,1000);
@@ -360,7 +357,6 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            // Respond to the action bar's Up/Home button
             case android.R.id.home:
                 onBackPressed();
                 this.finish();
