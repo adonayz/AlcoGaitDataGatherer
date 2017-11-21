@@ -4,6 +4,6 @@
     <string name="walk_instructions_title">Walk in a straight line</string>
     <string name="walk_instructions_detail">Walk for 1 minute. \n30 seconds forward \nand 30 seconds back.</string>
     <string name="update_instruction">Update data for next walk</string>
-    <string name="instructions_recording_before_30_seconds">Turn around when you hear the buzzer</string>
+    <string name="instructions_recording_before_30_seconds">Stop walking when you hear the buzzer</string>
     <string name="instructions_recording_after_30_seconds">Stop when you hear the buzzer</string>
 </resources>

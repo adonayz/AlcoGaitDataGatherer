@@ -14,7 +14,9 @@ public class TestSubject implements Serializable {
     private double weight;
     private int heightFeet;
     private int heightInches;
-    private LinkedList<Walk> allWalksFromSubject;
+    private LinkedList<Walk> successfulWalks;
+    private LinkedList<Walk> reportedWalks;
+    private String reportMessage;
 
     public TestSubject(String subjectID, Gender gender, int age, double weight, int heightFeet, int heightInches) {
         this.subjectID = subjectID;
@@ -23,7 +25,9 @@ public class TestSubject implements Serializable {
         this.weight = weight;
         this.heightFeet = heightFeet;
         this.heightInches = heightInches;
-        allWalksFromSubject = new LinkedList<>();
+        successfulWalks = new LinkedList<>();
+        reportedWalks = new LinkedList<>();
+        reportMessage = "";
     }
 
     public String getSubjectID() {
@@ -51,18 +55,38 @@ public class TestSubject implements Serializable {
     }
 
     public void addWalk(Walk walk){
-        allWalksFromSubject.add(walk);
+        successfulWalks.add(walk);
     }
 
-    public LinkedList<Walk> getAllWalksFromSubject() {
-        return allWalksFromSubject;
+    public LinkedList<Walk> getSuccessfulWalks() {
+        return successfulWalks;
+    }
+
+    public void setSuccessfulWalks(LinkedList<Walk> successfulWalks) {
+        this.successfulWalks = successfulWalks;
+    }
+
+    public LinkedList<Walk> getReportedWalks() {
+        return reportedWalks;
+    }
+
+    public void setReportedWalks(LinkedList<Walk> reportedWalks) {
+        this.reportedWalks = reportedWalks;
+    }
+
+    public String getReportMessage() {
+        return reportMessage;
+    }
+
+    public void setReportMessage(String reportMessage) {
+        this.reportMessage = reportMessage;
     }
 
     public void clearWalkData(){
-        allWalksFromSubject.clear();
+        successfulWalks.clear();
     }
 
     public Walk removeLastWalk(){
-        return allWalksFromSubject.removeLast();
+        return successfulWalks.removeLast();
     }
 }

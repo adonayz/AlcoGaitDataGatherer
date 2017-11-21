@@ -35,7 +35,7 @@ public class SurveyListAdapter extends BaseAdapter {
 
     private LayoutInflater inflater;
     private LinkedList<File> files;
-    private static LinkedList<String> savedIDs;
+    private static LinkedList<String> savedIDs = new LinkedList<>();
     private BoxApiFile mFileApi;
     private HomeActivity homeActivity;
     private ListView listView;

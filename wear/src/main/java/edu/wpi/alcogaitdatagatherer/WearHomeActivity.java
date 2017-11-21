@@ -37,8 +37,8 @@ import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
-import java.text.SimpleDateFormat;
-import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import edu.wpi.alcogaitdatagatherercommon.CommonValues;
@@ -57,13 +57,15 @@ public class WearHomeActivity extends WearableActivity implements MessageApi.Mes
 
     private SensorManager mSensorManager;
     private Sensor mHeartRateSensor;
+    private Sensor mAccelerometer;
+    private Sensor mGyroscope;
 
     private static final int BODY_SENSOR_PERMISSION_CODE = 1010;
     private static final int TIMEOUT = 15000;
     private String prevBACInput = "";
-
-    private static final SimpleDateFormat AMBIENT_DATE_FORMAT =
-            new SimpleDateFormat("HH:mm", Locale.US);
+    private int recordedSamples = 0; // for debugging purposes
+    private int noti_counter = 0; // count how many times the watch had to send a finished request to phone till it responds
+    private ExecutorService executorService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,6 +82,10 @@ public class WearHomeActivity extends WearableActivity implements MessageApi.Mes
         setupTimer();
 
         configureButtons();
+
+        recordedSamples = 0;
+
+        executorService = Executors.newCachedThreadPool();
     }
 
     private void initViews(){
@@ -122,7 +128,7 @@ public class WearHomeActivity extends WearableActivity implements MessageApi.Mes
     protected void onStop() {
         super.onStop();
         unregisterSensorListeners();
-        notifyMobile(CommonValues.WEAR_MESSAGE_PATH, CommonValues.WEARABLE_DISCONNECTED);
+        notifyPhone(CommonValues.WEAR_MESSAGE_PATH, CommonValues.WEARABLE_DISCONNECTED);
         if (null != mGoogleApiClient && mGoogleApiClient.isConnected()) {
             mGoogleApiClient.disconnect();
         }
@@ -133,7 +139,7 @@ public class WearHomeActivity extends WearableActivity implements MessageApi.Mes
     protected void onDestroy() {
         super.onDestroy();
         unregisterSensorListeners();
-        notifyMobile(CommonValues.WEAR_MESSAGE_PATH, CommonValues.WEARABLE_DISCONNECTED);
+        notifyPhone(CommonValues.WEAR_MESSAGE_PATH, CommonValues.WEARABLE_DISCONNECTED);
         if (null != mGoogleApiClient && mGoogleApiClient.isConnected()) {
             mGoogleApiClient.disconnect();
         }
@@ -141,16 +147,34 @@ public class WearHomeActivity extends WearableActivity implements MessageApi.Mes
 
     private void setupSensors(){
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        
-        if(mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE) != null){
-            mHeartRateSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
-        }else{
-            showToast("NO HEART RATE SENSOR");
+
+        if (mSensorManager == null) {
+            showToast("Sensor Manager not working");
+        } else {
+            if (mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE) != null) {
+                mHeartRateSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
+            } else {
+                showToast("NO HEART RATE SENSOR");
+            }
+
+            if (mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null) {
+                mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+            } else {
+                showToast("NO ACCELEROMETER SENSOR");
+            }
+
+            if (mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE) != null) {
+                mGyroscope = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+            } else {
+                showToast("NO GYROSCOPE SENSOR");
+            }
         }
     }
 
     private void registerSensorListeners(){
-        mSensorManager.registerListener(this, mHeartRateSensor, SensorManager.SENSOR_DELAY_NORMAL);
+        mSensorManager.registerListener(this, mHeartRateSensor, SensorManager.SENSOR_DELAY_FASTEST);
+        mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+        mSensorManager.registerListener(this, mGyroscope, SensorManager.SENSOR_DELAY_FASTEST);
     }
 
     private void unregisterSensorListeners(){
@@ -159,8 +183,8 @@ public class WearHomeActivity extends WearableActivity implements MessageApi.Mes
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
-        if(isRecording &&  sensorEvent.sensor.getType() == Sensor.TYPE_HEART_RATE){
-            sendSensorData(sensorEvent.sensor.getName(), sensorEvent.accuracy, sensorEvent.timestamp, sensorEvent.values);
+        if (isRecording) {
+            sendSensorData(sensorEvent.sensor.getType(), sensorEvent.sensor.getName(), sensorEvent.accuracy, sensorEvent.timestamp, sensorEvent.values);
         }
     }
 
@@ -169,20 +193,20 @@ public class WearHomeActivity extends WearableActivity implements MessageApi.Mes
 
     }
 
-    public void sendSensorData(final String sensorType, final int accuracy, final long timestamp, final float[] values){
-        new Thread( new Runnable() {
+    public void sendSensorData(final int sensorType, final String sensorName, final int accuracy, final long timestamp, final float[] values) {
+        Thread sendingThread = new Thread(new Runnable() {
             @Override
             public void run() {
 
-                PutDataMapRequest dataMap = PutDataMapRequest.create(CommonValues.SENSOR_PATH + sensorType);
+                PutDataMapRequest dataMap = PutDataMapRequest.create(CommonValues.SENSOR_PATH + String.valueOf(sensorType));
 
+                dataMap.getDataMap().putString(CommonValues.SENSOR_NAME, sensorName);
                 dataMap.getDataMap().putInt(CommonValues.ACCURACY, accuracy);
                 dataMap.getDataMap().putLong(CommonValues.TIMESTAMP, timestamp);
                 dataMap.getDataMap().putFloatArray(CommonValues.VALUES, values);
 
                 PutDataRequest putDataRequest = dataMap.asPutDataRequest();
 
-                // CHECK IF GOOGLE CLIENT IS CONNECTED
                 if(isClientConnected()){
                     Wearable.DataApi.putDataItem(mGoogleApiClient, putDataRequest).setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
                         @Override
@@ -190,13 +214,18 @@ public class WearHomeActivity extends WearableActivity implements MessageApi.Mes
                             Log.v("WearHomeActivty", "Sending sensor data: " + dataItemResult.getStatus().isSuccess());
                             if(dataItemResult.getStatus().isSuccess()){
                                 // show sucess
+                                if (sensorType != CommonValues.TRANSFER_FINISHED) {
+                                    recordedSamples++;
+                                }
                             }
                         }
                     });
                 }
 
             }
-        }).start();
+        });
+
+        executorService.submit(sendingThread);
     }
 
     private boolean isClientConnected(){
@@ -212,9 +241,10 @@ public class WearHomeActivity extends WearableActivity implements MessageApi.Mes
     private void startRecording(String bacInputText, boolean isActionFromPhone){
         if(!isRecording){
             isRecording = true;
+            recordedSamples = 0;
             registerSensorListeners();
             if(!isActionFromPhone){
-                notifyMobile(CommonValues.START_RECORDING_PATH, bacInputText);
+                notifyPhone(CommonValues.START_RECORDING_PATH, bacInputText);
             }
             prevBACInput = bacInputText;
             startAndStopButton.setImageResource(R.drawable.ic_action_stop);
@@ -227,20 +257,20 @@ public class WearHomeActivity extends WearableActivity implements MessageApi.Mes
 
     private void stopRecording(){
         if(isRecording) {
+            sendSensorData(CommonValues.TRANSFER_FINISHED, "none", noti_counter, 0, new float[1]);
+            ++noti_counter;
+            notifyPhone(CommonValues.STOP_RECORDING_PATH, String.valueOf(recordedSamples));
             unregisterSensorListeners();
-            notifyMobile(CommonValues.WEAR_MESSAGE_PATH, CommonValues.STOP_RECORDING);
             isRecording = false;
             startAndStopButton.setImageResource(R.drawable.ic_action_start);
-            instructionTextView.setText(R.string.update_instruction);
+            //instructionTextView.setText(R.string.update_instruction);
             bacInfoLayout.setVisibility(View.VISIBLE);
             countdownTextView.setVisibility(View.GONE);
             countDownTimer.cancel();
 
             Double BAC = Double.valueOf(prevBACInput);
-            bacInput.setText(String.valueOf(BAC + 1));
 
-
-            showToast("BAC input updated for next walk");
+            showToast("update input for next walk");
         }
     }
 
@@ -258,31 +288,22 @@ public class WearHomeActivity extends WearableActivity implements MessageApi.Mes
 
             public void onTick(long millisUntilFinished) {
                 countdownTextView.setText(String.valueOf(millisUntilFinished / 1000));
-
-                if((millisUntilFinished / 1000) == 30){
-                    ToneGenerator toneGen1 = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
-                    toneGen1.startTone(ToneGenerator.TONE_CDMA_ONE_MIN_BEEP,1000);
-                    Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-                    v.vibrate(1000);
-                    instructionTextView.setText(R.string.instructions_recording_after_30_seconds);
-                }
             }
 
             public void onFinish() {
+                ToneGenerator toneGen1 = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
+                toneGen1.startTone(ToneGenerator.TONE_CDMA_ONE_MIN_BEEP, 1000);
+                Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                v.vibrate(1000);
                 stopRecording();
             }
         };
     }
 
-
-
-
-
-
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         Wearable.MessageApi.addListener(mGoogleApiClient, this);
-        notifyMobile(CommonValues.WEAR_MESSAGE_PATH, CommonValues.WEARABLE_CONNECTED);
+        notifyPhone(CommonValues.WEAR_MESSAGE_PATH, CommonValues.WEARABLE_CONNECTED);
     }
 
     @Override
@@ -314,12 +335,9 @@ public class WearHomeActivity extends WearableActivity implements MessageApi.Mes
                            break;
                        case CommonValues.SAVE_SURVEY:
                            break;
-
                        case CommonValues.STOP_APP:
-                           onStop();
                            break;
                        case CommonValues.DESTROY_APP:
-                           onDestroy();
                            break;
                        case CommonValues.WEARABLE_DISCONNECTED:
                            isPhoneConnected = false;
@@ -327,10 +345,12 @@ public class WearHomeActivity extends WearableActivity implements MessageApi.Mes
                        case CommonValues.WEARABLE_CONNECTED:
                            if(!isPhoneConnected){
                                isPhoneConnected = true;
-                               notifyMobile(CommonValues.WEAR_MESSAGE_PATH, CommonValues.WEARABLE_CONNECTED);
+                               notifyPhone(CommonValues.WEAR_MESSAGE_PATH, CommonValues.WEARABLE_CONNECTED);
                                showToast("Phone Connected");
                            }
                            break;
+                       case CommonValues.REQUEST_WEARABLE_DATA_SAMPLE_SIZE:
+                           notifyPhone(CommonValues.STOP_RECORDING_PATH, String.valueOf(recordedSamples));
                        default:
                            break;
                    }
@@ -342,7 +362,7 @@ public class WearHomeActivity extends WearableActivity implements MessageApi.Mes
     }
 
 
-    private void notifyMobile(final String path, final String text){
+    private void notifyPhone(final String path, final String text) {
         new Thread( new Runnable() {
             @Override
             public void run() {

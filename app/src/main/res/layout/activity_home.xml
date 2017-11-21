@@ -39,7 +39,7 @@
                 android:layout_height="wrap_content"
                 app:srcCompat="@drawable/ic_add_item"
                 android:foregroundTint="@color/colorPrimaryDark"
-                android:backgroundTint="@color/colorPrimary"/>
+                app:backgroundTint="@color/colorPrimary" />
 
 
             <android.support.design.widget.FloatingActionButton
@@ -49,7 +49,7 @@
                 app:srcCompat="@drawable/ic_cloud_upload"
                 android:layout_marginTop="15dp"
                 android:foregroundTint="@color/colorPrimaryDark"
-                android:backgroundTint="@color/colorPrimary"/>
+                app:backgroundTint="@color/colorPrimary" />
         </LinearLayout>
     </RelativeLayout>
 

@@ -3,7 +3,7 @@
     package="edu.wpi.alcogaitdatagatherercommon.test" >
 
     <uses-sdk
-        android:minSdkVersion="24"
+        android:minSdkVersion="23"
         android:targetSdkVersion="26" />
 
     <instrumentation

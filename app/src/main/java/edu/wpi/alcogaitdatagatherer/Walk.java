@@ -1,79 +1,83 @@
 package edu.wpi.alcogaitdatagatherer;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 
 /**
  * Created by Adonay on 9/29/2017.
  */
 
-public class Walk {
+public class Walk implements Serializable {
 
     private int walkNumber;
     private double BAC;
-    private LinkedList<String[]> accelerometerDataList;
-    private LinkedList<String[]> gyroscopeDataList;
+    private LinkedList<String[]> phoneAccelerometerDataList;
+    private LinkedList<String[]> phoneGyroscopeDataList;
+    private LinkedList<String[]> watchAccelerometerDataList;
+    private LinkedList<String[]> watchGyroscopeDataList;
     private LinkedList<String[]> heartRateDataList;
+    private LinkedList<String[]> compassDataList;
+    private int samplesCollected;
 
     public Walk(int walkNumber, double BAC) {
         this.walkNumber = walkNumber;
         this.BAC = BAC;
-        accelerometerDataList = new LinkedList<>();
-        gyroscopeDataList = new LinkedList<>();
+        phoneAccelerometerDataList = new LinkedList<>();
+        phoneGyroscopeDataList = new LinkedList<>();
+        watchAccelerometerDataList = new LinkedList<>();
+        watchGyroscopeDataList = new LinkedList<>();
         heartRateDataList = new LinkedList<>();
+        compassDataList = new LinkedList<>();
     }
 
     public int getWalkNumber() {
         return walkNumber;
     }
 
-    public void setWalkNumber(int walkNumber) {
-        this.walkNumber = walkNumber;
-    }
-
     public double getBAC() {
         return BAC;
     }
 
-    public void setBAC(double BAC) {
-        this.BAC = BAC;
+    public void addPhoneAccelerometerData(String[] sensorData) {
+        this.phoneAccelerometerDataList.add(sensorData);
     }
 
-    public LinkedList<String[]> getAccelerometerDataList() {
-        return accelerometerDataList;
+    public void addPhoneGyroscopeData(String[] sensorData) {
+        this.phoneGyroscopeDataList.add(sensorData);
     }
 
-    public LinkedList<String[]> getGyroscopeDataList() {
-        return gyroscopeDataList;
+    public void addWatchAccelerometerData(String[] sensorData) {
+        this.watchAccelerometerDataList.add(sensorData);
     }
 
-    public LinkedList<String[]> getHeartRateDataList() {
-        return heartRateDataList;
+    public void addWatchGyroscopeData(String[] sensorData) {
+        this.watchGyroscopeDataList.add(sensorData);
     }
 
-    public void addAccelerometerData(String[] sensorData) {
-        this.accelerometerDataList.add(sensorData);
+    public void addHeartRateData(String[] sensorData) {
+        this.heartRateDataList.add(sensorData);
     }
 
-    public void addGyroscopeData(String[] sensorData) {
-        this.gyroscopeDataList.add(sensorData);
-    }
-
-    public void addHeartRateData(String[] heartRateData){
-        this.heartRateDataList.add(heartRateData);
+    public void addCompasData(String[] compassData) {
+        this.compassDataList.add(compassData);
     }
 
     public int getSampleSize(){
-        return accelerometerDataList.size() + gyroscopeDataList.size() + heartRateDataList.size();
+        return phoneAccelerometerDataList.size() + phoneGyroscopeDataList.size() + compassDataList.size() + watchAccelerometerDataList.size() + watchGyroscopeDataList.size() + heartRateDataList.size();
     }
 
     public LinkedList<String[]> toCSVFormat(){
         final String[] SPACE = {""};
-        final String[] ACCELEROMETER_TITLE = {"ACCELEROMETER DATA"};
-        final String[] GYROSCOPE_TITLE = {"GYROSCOPE DATA"};
-        final String[] HEART_RATE_TITLE = {"HEART RATE DATA"};
+        final String[] PHONE_ACCELEROMETER_TITLE = {"ACCELEROMETER DATA (PHONE)"};
+        final String[] PHONE_GYROSCOPE_TITLE = {"GYROSCOPE DATA (PHONE)"};
+        final String[] WATCH_ACCELEROMETER_TITLE = {"ACCELEROMETER DATA (WATCH)"};
+        final String[] WATCH_GYROSCOPE_TITLE = {"GYROSCOPE DATA (WATCH)"};
+        final String[] COMPASS_TITLE = {"COMPASS (PHONE)"};
+        final String[] HEART_RATE_TITLE = {"HEART RATE DATA (WATCH)"};
 
-        String[] TABLE_HEADER_1 = {"Sensor Name", "X", "Y", "Z", "Timestamp"};
-        String[] TABLE_HEADER_2 = {"Sensor Name", "Beats Per Minute", "Timestamp"};
+        final String[] A_G_TABLE_HEADER = {"Sensor Name", "X", "Y", "Z", "Timestamp"};
+        final String[] HEART_RATE_TABLE_HEADER = {"Sensor Name", "Rate (BPM)", "Timestamp"};
+        final String[] COMPASS_TABLE_HEADER = {"Derived Data", "Azimuth", "Pitch", "Roll", "Timestamp"};
 
         LinkedList<String[]> csvFormat = new LinkedList<>();
 
@@ -81,16 +85,28 @@ public class Walk {
 
         csvFormat.add(walkInformation);
         csvFormat.add(SPACE);
-        csvFormat.add(ACCELEROMETER_TITLE);
-        csvFormat.add(TABLE_HEADER_1);
-        csvFormat.addAll(accelerometerDataList);
+        csvFormat.add(PHONE_ACCELEROMETER_TITLE);
+        csvFormat.add(A_G_TABLE_HEADER);
+        csvFormat.addAll(phoneAccelerometerDataList);
         csvFormat.add(SPACE);
-        csvFormat.add(GYROSCOPE_TITLE);
-        csvFormat.add(TABLE_HEADER_1);
-        csvFormat.addAll(gyroscopeDataList);
+        csvFormat.add(PHONE_GYROSCOPE_TITLE);
+        csvFormat.add(A_G_TABLE_HEADER);
+        csvFormat.addAll(phoneGyroscopeDataList);
+        csvFormat.add(SPACE);
+        csvFormat.add(COMPASS_TITLE);
+        csvFormat.add(COMPASS_TABLE_HEADER);
+        csvFormat.addAll(compassDataList);
+        csvFormat.add(SPACE);
+        csvFormat.add(WATCH_ACCELEROMETER_TITLE);
+        csvFormat.add(A_G_TABLE_HEADER);
+        csvFormat.addAll(watchAccelerometerDataList);
+        csvFormat.add(SPACE);
+        csvFormat.add(WATCH_GYROSCOPE_TITLE);
+        csvFormat.add(A_G_TABLE_HEADER);
+        csvFormat.addAll(watchGyroscopeDataList);
         csvFormat.add(SPACE);
         csvFormat.add(HEART_RATE_TITLE);
-        csvFormat.add(TABLE_HEADER_2);
+        csvFormat.add(HEART_RATE_TABLE_HEADER);
         csvFormat.addAll(heartRateDataList);
 
         return csvFormat;

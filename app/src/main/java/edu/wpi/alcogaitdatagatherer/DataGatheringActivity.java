@@ -2,8 +2,7 @@ package edu.wpi.alcogaitdatagatherer;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.app.Fragment;
-import android.app.FragmentTransaction;
+import android.app.FragmentManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -26,6 +25,7 @@ import android.support.v7.widget.AppCompatTextView;
 import android.support.v7.widget.Toolbar;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.util.SparseBooleanArray;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
@@ -52,6 +52,7 @@ import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
 
 import java.io.File;
+import java.util.LinkedList;
 
 import edu.wpi.alcogaitdatagatherercommon.CommonValues;
 import it.sephiroth.android.library.tooltip.Tooltip;
@@ -59,7 +60,7 @@ import it.sephiroth.android.library.tooltip.Tooltip;
 import static android.view.View.LAYER_TYPE_HARDWARE;
 import static android.view.View.LAYER_TYPE_NONE;
 
-public class DataGatheringActivity extends AppCompatActivity implements MessageApi.MessageListener, DataApi.DataListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, WalkReportFragment.OnListFragmentInteractionListener {
+public class DataGatheringActivity extends AppCompatActivity implements MessageApi.MessageListener, DataApi.DataListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, WalkReportFragment.ReportFragmentListener {
 
     // Android Layout Variables
     private TextView countdownTextField;
@@ -74,6 +75,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
     private TextView walkLogDisplay;
     private FrameLayout progressBarHolder;
     private RelativeLayout bottomBarLayout;
+    private TextView wearConnectProgressUpdateTextView;
 
     private AlphaAnimation inAnimation;
     private AlphaAnimation outAnimation;
@@ -86,6 +88,8 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
     private boolean isWearableConnected = false;
     private static final int READ_WRITE_PERMISSION_CODE = 1000;
     static final String TB_FOR_WALK_REPORT = "walk_report";
+    private int samplesReceivedFromWatch = 0;
+    private int totalSampleSizeInWearable = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,9 +112,9 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
 
         sensorRecorder = new SensorRecorder(this, mFilename, testSubject, walkNumberDisplay, walkLogDisplay);
 
-        connecClientForWearable();
+        connectClientForWearable();
 
-        //startProgressBar();
+        startProgressBar();
 
         setupTimer();
     }
@@ -133,6 +137,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
         walkLogDisplay.setMovementMethod(new ScrollingMovementMethod());
         progressBarHolder = (FrameLayout) findViewById(R.id.progressBarHolder);
         bottomBarLayout = (RelativeLayout) findViewById(R.id.bottomBar);
+        wearConnectProgressUpdateTextView = findViewById(R.id.wearConnectProgressUpdateTextView);
         disableBar(true);
     }
 
@@ -151,7 +156,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
         stopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                stopRecording();
+                notifyWearableActivity(CommonValues.WEAR_MESSAGE_PATH, CommonValues.REQUEST_WEARABLE_DATA_SAMPLE_SIZE);
             }
         });
 
@@ -189,14 +194,14 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
                                 break;
 
                             case DialogInterface.BUTTON_NEGATIVE:
-                                //No button clicked
+                                requestSave();
                                 break;
                         }
                     }
                 };
                 AlertDialog.Builder builder = new AlertDialog.Builder(DataGatheringActivity.this);
-                builder.setTitle("Save Walks");
-                builder.setMessage("Do you want to complete survey and save data into internal storage?").setPositiveButton("Yes", dialogClickListener)
+                builder.setTitle("Report Walks");
+                builder.setMessage("Would you like to submit a report about any of the walks?").setPositiveButton("Yes", dialogClickListener)
                         .setNegativeButton("No", dialogClickListener).show();
 
 
@@ -219,13 +224,6 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
             // 5
             public void onTick(long millisUntilFinished) {
                 countdownTextField.setText(String.valueOf(millisUntilFinished / 1000));
-
-                if((millisUntilFinished / 1000) == 30){
-                    ToneGenerator toneGen1 = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
-                    toneGen1.startTone(ToneGenerator.TONE_CDMA_ONE_MIN_BEEP,1000);
-                    Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-                    v.vibrate(1000);
-                }
             }
 
             // 6
@@ -243,6 +241,8 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
         if(!sensorRecorder.isRecording()){
             Double BAC = Double.valueOf(bacInputText);
             bacInput.setText(String.valueOf(BAC));
+            samplesReceivedFromWatch = 0;
+            totalSampleSizeInWearable = 0;
 
             if(!isActionFromWearable){
                 notifyWearableActivity(CommonValues.START_RECORDING_PATH, bacInputText);
@@ -267,21 +267,13 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
 
     private void stopRecording(){
         if(sensorRecorder.isRecording()){
+            startProgressBar();
             notifyWearableActivity(CommonValues.WEAR_MESSAGE_PATH, CommonValues.STOP_RECORDING);
 
             countdown_title.setVisibility(View.GONE);
-            startButton.setVisibility(View.VISIBLE);
-            stopButton.setVisibility(View.GONE);
-
-            sensorRecorder.stopRecording();
-
-            bacInput.setText("");
-            bacInput.setEnabled(true);
-            createToolTip(bacInput, Tooltip.Gravity.RIGHT, "Update BAC for next walk");
-            disableBar(false);
-
             countDownTimer.cancel();
             setupTimer();
+            stopButton.setVisibility(View.GONE);
         }
     }
 
@@ -377,7 +369,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
         return super.onOptionsItemSelected(item);
     }
 
-    private void connecClientForWearable(){
+    private void connectClientForWearable() {
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(Wearable.API)
                 .addConnectionCallbacks(this)
@@ -411,8 +403,6 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
     @Override
     public void onConnectionSuspended(int i) {
         Log.d("GoogleApi", "onConnectionSuspended: " + i);
-        /*Intent intent = new Intent(this, edu.wpi.alcogaitdatagatherer.SensorRecorder.class);
-        stopService(intent);*/
         isWearableConnected = false;
     }
 
@@ -429,9 +419,6 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
             public void run() {
                 if(messageEvent.getPath().equalsIgnoreCase( CommonValues.WEAR_MESSAGE_PATH) ) {
                     switch (new String(messageEvent.getData())){
-                        case CommonValues.STOP_RECORDING:
-                            stopRecording();
-                            break;
                         case CommonValues.CONFIRM_WALK:
                             break;
                         case CommonValues.REDO_PREVIOUS_WALK:
@@ -456,6 +443,9 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
                     }
                 }else if(messageEvent.getPath().equalsIgnoreCase(CommonValues.START_RECORDING_PATH)) {
                     startRecording(new String(messageEvent.getData()),true);
+                } else if (messageEvent.getPath().equalsIgnoreCase(CommonValues.STOP_RECORDING_PATH)) {
+                    totalSampleSizeInWearable = Integer.valueOf(new String(messageEvent.getData()));
+                    stopRecording();
                 }
             }
         });
@@ -488,10 +478,17 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
                     String path = uri.getPath();
 
                     if (path.startsWith(CommonValues.SENSOR_PATH)) {
-                        sensorRecorder.addHeartRateData(
-                               uri.getLastPathSegment(),
+                        if (Integer.parseInt(uri.getLastPathSegment()) == CommonValues.TRANSFER_FINISHED) {
+                            sensorRecorder.stopRecording();
+                            resetRecordViews();
+                            return;
+                        }
+                        sensorRecorder.addWearableSensorData(
+                                Integer.parseInt(uri.getLastPathSegment()),
                                 DataMapItem.fromDataItem(dataItem).getDataMap()
                         );
+                        samplesReceivedFromWatch++;
+                        wearConnectProgressUpdateTextView.setText(String.valueOf(samplesReceivedFromWatch));
                     }
                 }
             }
@@ -521,16 +518,9 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
         }
     }
 
-    protected void setFragment(Fragment fragment) {
-        FragmentTransaction transaction = getFragmentManager().beginTransaction();
-
-// Replace whatever is in the fragment_container view with this fragment,
-// and add the transaction to the back stack
-        transaction.replace(R.id.fragment_container, fragment);
-        transaction.addToBackStack(null);
-
-// Commit the transaction
-        transaction.commit();
+    protected void setFragment(WalkReportFragment fragment) {
+        FragmentManager manager = getFragmentManager();
+        fragment.show(manager, "FRAGMENT");
     }
 
     private void showSaveDialog(){
@@ -564,16 +554,41 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     showSaveDialog();
-                } else {
-                    // permission denied by user. disable
                 }
-                return;
             }
         }
     }
 
-    @Override
-    public void onListFragmentInteraction(Walk walk) {
+    private void resetRecordViews() {
+        stopProgressBar();
+        startButton.setVisibility(View.VISIBLE);
+        bacInput.setText("");
+        bacInput.setEnabled(true);
+        createToolTip(bacInput, Tooltip.Gravity.RIGHT, "Update BAC for next walk");
+        disableBar(false);
+    }
 
+    @Override
+    public void submitReport(SparseBooleanArray checkBoxStates, String reportMessage) {
+        if (checkBoxStates.size() > 0) {
+            TestSubject testSubject = sensorRecorder.getTestSubject();
+            LinkedList<Walk> newSuccessfulWalks = new LinkedList<>();
+            LinkedList<Walk> reportedWalks = new LinkedList<>();
+
+            for (int i = 0; i < checkBoxStates.size(); i++) {
+                if (!checkBoxStates.get(i)) {
+                    newSuccessfulWalks.add(testSubject.getSuccessfulWalks().get(i));
+                } else {
+                    reportedWalks.add(testSubject.getSuccessfulWalks().get(i));
+                }
+            }
+
+            testSubject.setSuccessfulWalks(newSuccessfulWalks);
+            testSubject.setReportedWalks(reportedWalks);
+            testSubject.setReportMessage(reportMessage);
+
+            sensorRecorder.setTestSubject(testSubject);
+        }
+        requestSave();
     }
 }

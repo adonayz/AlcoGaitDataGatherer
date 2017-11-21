@@ -2,34 +2,32 @@ package edu.wpi.alcogaitdatagatherer;
 
 import android.app.DialogFragment;
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.support.v7.widget.AppCompatTextView;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 
-/**
- * A fragment representing a list of Items.
- * <p/>
- * Activities containing this fragment MUST implement the {@link OnListFragmentInteractionListener}
- * interface.
- */
 public class WalkReportFragment extends DialogFragment {
 
     // TODO: Customize parameter argument names
     private static final String ARG_COLUMN_COUNT = "column-count";
     // TODO: Customize parameters
     private int mColumnCount = 1;
-    private OnListFragmentInteractionListener mListener;
+    private ReportFragmentListener mListener;
     private TestSubject testSubject;
 
-    /**
-     * Mandatory empty constructor for the fragment manager to instantiate the
-     * fragment (e.g. upon screen orientation changes).
-     */
+    private AppCompatTextView saveButton;
+    private AppCompatTextView cancelButton;
+
     public WalkReportFragment() {
     }
 
@@ -59,7 +57,11 @@ public class WalkReportFragment extends DialogFragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_walkreport_list, container, false);
 
-        RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.recyclerViewList);
+        getDialog().requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getDialog().getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        setStyle(DialogFragment.STYLE_NO_FRAME, android.R.style.Theme);
+
+        final RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.recyclerViewList);
         Context context = recyclerView.getContext();
 
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(recyclerView.getContext(),
@@ -70,7 +72,26 @@ public class WalkReportFragment extends DialogFragment {
         } else {
             recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
         }
-        recyclerView.setAdapter(new MyWalkReportRecyclerViewAdapter(testSubject.getAllWalksFromSubject(), mListener));
+
+        recyclerView.setAdapter(new MyWalkReportRecyclerViewAdapter(testSubject.getSuccessfulWalks(), mListener));
+
+        saveButton = view.findViewById(R.id.reportSave);
+        cancelButton = view.findViewById(R.id.reportCancel);
+
+        saveButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ((MyWalkReportRecyclerViewAdapter) recyclerView.getAdapter()).saveReport();
+            }
+        });
+
+        cancelButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                dismiss();
+            }
+        });
+
         return view;
     }
 
@@ -78,8 +99,8 @@ public class WalkReportFragment extends DialogFragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof OnListFragmentInteractionListener) {
-            mListener = (OnListFragmentInteractionListener) context;
+        if (context instanceof ReportFragmentListener) {
+            mListener = (ReportFragmentListener) context;
         } else {
             throw new RuntimeException(context.toString()
                     + " must implement OnListFragmentInteractionListener");
@@ -92,18 +113,8 @@ public class WalkReportFragment extends DialogFragment {
         mListener = null;
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p/>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    public interface OnListFragmentInteractionListener {
+    public interface ReportFragmentListener {
         // TODO: Update argument type and name
-        void onListFragmentInteraction(Walk item);
+        void submitReport(SparseBooleanArray checkBoxStates, String reportMessage);
     }
 }
