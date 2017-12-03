@@ -21,4 +21,13 @@ public enum WalkType {
         return walkTypeString;
     }
 
+    public WalkType next(WalkType prevWalkType) {
+        for (int i = 0; i < WalkType.values().length - 1; i++) {
+            if (prevWalkType == WalkType.values()[i]) {
+                return WalkType.values()[i + 1];
+            }
+        }
+        return null;
+    }
+
 }

@@ -116,7 +116,6 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
         if (isWearableFeatureEnabled) {
             connectClientForWearable();
             startProgressBar();
-
         }
 
         setupTimer();
@@ -193,7 +192,6 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
         finishButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                requestSave();
                 DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -215,12 +213,30 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
                         }
                     }
                 };
-                AlertDialog.Builder builder = new AlertDialog.Builder(DataGatheringActivity.this);
+                final AlertDialog.Builder builder = new AlertDialog.Builder(DataGatheringActivity.this);
                 builder.setTitle("Report Walks");
                 builder.setMessage("Would you like to submit a report about any of the walks?").setPositiveButton("Yes", dialogClickListener)
+                        .setNegativeButton("No", dialogClickListener);
+
+                DialogInterface.OnClickListener dialogClickListener2 = new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        switch (which) {
+                            case DialogInterface.BUTTON_POSITIVE:
+                                builder.show();
+                                break;
+
+                            case DialogInterface.BUTTON_NEGATIVE:
+
+                                break;
+                        }
+                    }
+                };
+                AlertDialog.Builder builder2 = new AlertDialog.Builder(DataGatheringActivity.this);
+                builder2.setTitle("Finish Survey");
+                builder2.setMessage("Are you sure you want to finish survey? Unfinished walk number data will be lost (Walk Number " +
+                        sensorRecorder.getTestSubject().getCurrentWalkHolder().getWalkNumber() + ").").setPositiveButton("Yes", dialogClickListener2)
                         .setNegativeButton("No", dialogClickListener).show();
-
-
             }
         });
     }

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:id="@+id/wtamt_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/colorPrimary"
+        android:textColor="@color/white"
+        android:gravity="center"
+        style="@style/Widget.AppCompat.Button.Borderless.Colored"
+        android:text="Select Amount Of Walk Types To Record" />
+
+    <RadioGroup
+        android:id="@+id/rd_group"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/ab_margin"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_below="@id/wtamt_title"
+        android:backgroundTint="@color/colorAccent"
+        android:foregroundTint="@color/colorAccent">
+
+        <RadioButton
+            android:id="@+id/rd_2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="2 WALKS" />
+
+        <RadioButton
+            android:id="@+id/rd_4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="4WALKS" />
+
+    </RadioGroup>
+
+    <android.support.v7.widget.AppCompatTextView
+        android:id="@+id/okButton"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        style="@style/Widget.AppCompat.Button.Borderless.Colored"
+        android:gravity="center"
+        android:background="@color/colorPrimary"
+        android:textColor="@color/white"
+        android:layout_below="@id/rd_group"
+        android:text="OK" />
+</RelativeLayout>

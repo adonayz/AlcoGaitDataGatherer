@@ -1,6 +1,7 @@
 package edu.wpi.alcogaitdatagatherer;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
 
 /**
@@ -10,10 +11,12 @@ import java.util.HashMap;
 public class WalkHolder implements Serializable {
     private int walkNumber;
     private HashMap<WalkType, Walk> walkMap;
+    private WalkType[] allowedWalkTypes;
 
     WalkHolder(int walkNumber) {
         this.walkNumber = walkNumber;
         walkMap = new HashMap<>();
+        allowedWalkTypes = WalkType.values();
     }
 
     public int getWalkNumber() {
@@ -35,7 +38,7 @@ public class WalkHolder implements Serializable {
     }
 
     public WalkType getNextWalkType() {
-        for (WalkType walkType : WalkType.values()) {
+        for (WalkType walkType : allowedWalkTypes) {
             if (!walkMap.containsKey(walkType)) {
                 return walkType;
             }
@@ -45,7 +48,7 @@ public class WalkHolder implements Serializable {
 
     public WalkType getPreviousWalkType(WalkType currentWalkType) {
         WalkType prevWalkType = null;
-        for (WalkType walkType : WalkType.values()) {
+        for (WalkType walkType : allowedWalkTypes) {
             if (walkType == currentWalkType) {
                 return prevWalkType;
             }
@@ -60,11 +63,20 @@ public class WalkHolder implements Serializable {
 
     public int getSampleSize() {
         int total = 0;
-        for (WalkType walkType : WalkType.values()) {
+        for (WalkType walkType : allowedWalkTypes) {
             if (walkMap.containsKey(walkType)) {
                 total += walkMap.get(walkType).getSampleSize();
             }
         }
         return total;
+    }
+
+    public WalkHolder setAllowedWalkTypes(int numOfWalkTypesAllowed) {
+        if (numOfWalkTypesAllowed > 0 && numOfWalkTypesAllowed < 5) {
+            allowedWalkTypes = Arrays.copyOfRange(WalkType.values(), 0, numOfWalkTypesAllowed);
+        } else {
+            allowedWalkTypes = WalkType.values();
+        }
+        return this;
     }
 }

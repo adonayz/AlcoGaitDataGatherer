@@ -22,6 +22,7 @@ import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.Locale;
 
 import edu.wpi.alcogaitdatagatherercommon.CommonValues;
 
@@ -55,7 +56,7 @@ public class SensorRecorder implements SensorEventListener {
     private float[] magVal;
     private LinkedList<Walk> logQueue;
 
-    private SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss.SSS");
+    private SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss.SSS", Locale.US);
     private final int MAXLOGS = 5;
     private String mFolderName = null;
     private boolean isRecording;
@@ -83,6 +84,7 @@ public class SensorRecorder implements SensorEventListener {
         currentWalkType = WalkType.NORMAL;
         updateWalkNumberDisplay();
         testSubject.setCurrentWalkHolder(new WalkHolder(currentWalkNumber));
+        testSubject.setWalkTypeAmount(walkNumberDisplay.getContext());
     }
 
     public void registerListeners() {
@@ -223,12 +225,13 @@ public class SensorRecorder implements SensorEventListener {
 
     private void restartWalkHolder() {
         isRecording = false;
-        walk = null;
-        currentWalkNumber = 1;
-        currentWalkType = WalkType.NORMAL;
         testSubject.replaceWalkHolder(new WalkHolder(currentWalkNumber));
+        currentWalkNumber = testSubject.getCurrentWalkHolder().getWalkNumber();
+        currentWalkType = testSubject.getCurrentWalkHolder().getNextWalkType();
         updateWalkNumberDisplay();
         clearWalkLog();
+        testSubject.setWalkTypeAmount(walkNumberDisplay.getContext());
+        walk = testSubject.getCurrentWalkHolder().get(currentWalkType);
         walkLogDisplay.setVisibility(View.GONE);
     }
 
@@ -365,6 +368,7 @@ public class SensorRecorder implements SensorEventListener {
         testSubject.addNewWalkHolder(new WalkHolder(currentWalkNumber));
         currentWalkType = testSubject.getCurrentWalkHolder().getNextWalkType();
         updateWalkNumberDisplay();
+        testSubject.setWalkTypeAmount(walkNumberDisplay.getContext());
         startButton.setText("START WALK");
     }
 

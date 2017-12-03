@@ -1,8 +1,13 @@
 package edu.wpi.alcogaitdatagatherer;
 
+import android.app.Dialog;
+import android.content.Context;
+import android.support.v7.widget.AppCompatTextView;
+import android.view.View;
+import android.widget.RadioButton;
+
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
@@ -86,13 +91,38 @@ public class TestSubject implements Serializable {
     }
 
     public void setCurrentWalkHolder(WalkHolder walkHolder) {
-        currentWalkHolder = walkHolder;
+        this.currentWalkHolder = walkHolder;
     }
 
     public void addNewWalkHolder(WalkHolder currentWalkHolder) {
         addSamplesSize(this.currentWalkHolder.getWalkNumber(), this.currentWalkHolder.getSampleSize());
-        this.currentWalkHolder = currentWalkHolder;
+        setCurrentWalkHolder(currentWalkHolder);
         booleanWalksList.add(false);
+    }
+
+    public void setWalkTypeAmount(Context context) {
+        final Dialog dialog = new Dialog(context);
+        dialog.setContentView(R.layout.walk_type_amount_dialog);
+        dialog.setCancelable(false);
+        final RadioButton rd2 = (RadioButton) dialog.findViewById(R.id.rd_2);
+        final RadioButton rd4 = (RadioButton) dialog.findViewById(R.id.rd_4);
+        final AppCompatTextView okButton = (AppCompatTextView) dialog.findViewById(R.id.okButton);
+
+        okButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (rd2.isChecked()) {
+                    setCurrentWalkHolder(getCurrentWalkHolder().setAllowedWalkTypes(2));
+                    dialog.dismiss();
+                }
+                if (rd4.isChecked()) {
+                    setCurrentWalkHolder(getCurrentWalkHolder().setAllowedWalkTypes(4));
+                    dialog.dismiss();
+                }
+            }
+        });
+        // now that the dialog is set up, it's time to show it
+        dialog.show();
     }
 
     public void replaceWalkHolder(WalkHolder currentWalkHolder) {
@@ -100,13 +130,13 @@ public class TestSubject implements Serializable {
         this.currentWalkHolder = currentWalkHolder;
     }
 
-    public int getTotalSampleSize() {
+    /*public int getTotalSampleSize() {
         int total = 0;
         for (Iterator<Integer> it = sampleSizeMap.keySet().iterator(); it.hasNext(); ) {
             total += sampleSizeMap.get(it.next());
         }
         return total;
-    }
+    }*/
 
     public void addSamplesSize(int walkNumber, int sampleSize) {
         sampleSizeMap.put(walkNumber, sampleSize);
