@@ -13,6 +13,8 @@ import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.RadioButton;
 
+import java.util.Locale;
+
 public class SurveyFormActivity extends AppCompatActivity{
 
     private boolean isIDUnavailable;
@@ -57,10 +59,33 @@ public class SurveyFormActivity extends AppCompatActivity{
 
             @Override
             public void afterTextChanged(Editable editable) {
-                if(isIDUnavailable = SurveyListAdapter.getSavedIDs().contains(editable.toString().trim())){
+                if (isIDUnavailable = SurveyListAdapter.getSavedIDs().contains(editable.toString().trim().replaceFirst("^0+(?!$)", ""))) {
                     subjectIDInput.setError("This ID already exists. Please enter a valid ID.");
                 }else{
                     subjectIDInput.setError(null);
+                }
+            }
+        });
+
+        heightInchesInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (!editable.toString().trim().isEmpty()) {
+                    if (Integer.parseInt(editable.toString().trim()) > 11) {
+                        heightInchesInput.setError("Invalid. 11 Inches Maximum");
+                    } else {
+                        heightInchesInput.setError(null);
+                    }
                 }
             }
         });
@@ -71,7 +96,7 @@ public class SurveyFormActivity extends AppCompatActivity{
         submitButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String subjectID = subjectIDInput.getText().toString().trim();
+                String subjectID = String.format(Locale.US, "%04d", Integer.parseInt(subjectIDInput.getText().toString().trim())).trim();
                 String age = ageInput.getText().toString().trim();
                 String weight = weightInput.getText().toString().trim();
                 String heightFeet = heightFeetInput.getText().toString().trim();

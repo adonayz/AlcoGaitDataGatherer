@@ -52,7 +52,6 @@ import com.google.android.gms.wearable.Wearable;
 
 import java.io.File;
 import java.util.LinkedList;
-import java.util.Locale;
 
 import edu.wpi.alcogaitdatagatherercommon.CommonValues;
 import it.sephiroth.android.library.tooltip.Tooltip;
@@ -149,7 +148,8 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
         startButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (bacInput.getText().toString().trim().isEmpty() && allowBACInput) {
+                allowBACInput = sensorRecorder.getCurrentWalkType() == WalkType.NORMAL;
+                if ((bacInput.getText().toString().trim().isEmpty()) && allowBACInput) {
                     bacInput.setError("Please enter BAC data.");
                 }else{
                     startRecording(bacInput.getText().toString().trim(), false);
@@ -227,8 +227,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
 
     private void prepareStorageFile(){
         String baseDir = android.os.Environment.getExternalStorageDirectory().getAbsolutePath() + "/AlcoGaitDataGatherer/";
-        String formattedID = String.format(Locale.US, "%04d", Integer.parseInt(testSubject.getSubjectID().trim())).trim();
-        String folderName = "ID_" + formattedID;
+        String folderName = "ID_" + testSubject.getSubjectID().trim();
         mFolderName = baseDir + folderName + "/";
         File surveyStorageDirectory = new File(mFolderName);
         surveyStorageDirectory.mkdirs();
@@ -386,8 +385,25 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                onBackPressed();
-                this.finish();
+                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        switch (which) {
+                            case DialogInterface.BUTTON_POSITIVE:
+                                DataGatheringActivity.this.onBackPressed();
+                                DataGatheringActivity.this.finish();
+                                break;
+
+                            case DialogInterface.BUTTON_NEGATIVE:
+                                break;
+                        }
+                    }
+                };
+                AlertDialog.Builder builder = new AlertDialog.Builder(DataGatheringActivity.this);
+                builder.setTitle("Return To Form?");
+                builder.setMessage("Are you sure you want to return to the form? Data for the latest walk number will be lost (#"
+                        + sensorRecorder.getTestSubject().getCurrentWalkHolder().getWalkNumber() + ")").setPositiveButton("Yes", dialogClickListener)
+                        .setNegativeButton("No", dialogClickListener).show();
                 return true;
         }
         return super.onOptionsItemSelected(item);

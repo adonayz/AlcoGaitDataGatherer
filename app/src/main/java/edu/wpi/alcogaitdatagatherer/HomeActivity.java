@@ -45,6 +45,8 @@ public class HomeActivity extends AppCompatActivity implements BoxAuthentication
     private BoxApiFolder mFolderApi;
     private BoxApiFile mFileApi;
 
+    private boolean boxOptionEnabled = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,8 +66,10 @@ public class HomeActivity extends AppCompatActivity implements BoxAuthentication
 
         requestPermissions();
 
-        configureBoxClient();
-        initializeBoxSession();
+        if (boxOptionEnabled) {
+            configureBoxClient();
+            initializeBoxSession();
+        }
 
         FloatingActionButton aab = (FloatingActionButton) findViewById(R.id.aab);
         aab.setOnClickListener(new View.OnClickListener() {
@@ -77,12 +81,14 @@ public class HomeActivity extends AppCompatActivity implements BoxAuthentication
         });
 
         FloatingActionButton uab = (FloatingActionButton) findViewById(R.id.uab);
-        uab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                surveyListAdapter.syncWithBox(mFileApi);
-            }
-        });
+        if (boxOptionEnabled) {
+            uab.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    surveyListAdapter.syncWithBox(mFileApi);
+                }
+            });
+        }
     }
 
     public void requestPermissions(){

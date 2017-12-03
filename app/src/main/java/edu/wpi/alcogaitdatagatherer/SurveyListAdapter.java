@@ -174,7 +174,8 @@ public class SurveyListAdapter extends BaseAdapter {
     public static LinkedList<String> getSavedIDs() {
         LinkedList<String> result = new LinkedList<>();
         for (File file : files) {
-            result.add(file.getName().trim());
+            String idOnly = file.getName().substring(HomeActivity.FILE_SHOULD_START_WITH.length(), file.getName().length());
+            result.add(idOnly.replaceFirst("^0+(?!$)", ""));
         }
         return result;
     }
