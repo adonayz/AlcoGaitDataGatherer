@@ -8,26 +8,30 @@ import java.util.LinkedList;
  */
 
 public class Walk implements Serializable {
-
     private int walkNumber;
     private double BAC;
+    private WalkType walkType;
     private LinkedList<String[]> phoneAccelerometerDataList;
     private LinkedList<String[]> phoneGyroscopeDataList;
     private LinkedList<String[]> watchAccelerometerDataList;
     private LinkedList<String[]> watchGyroscopeDataList;
     private LinkedList<String[]> heartRateDataList;
     private LinkedList<String[]> compassDataList;
-    private int samplesCollected;
 
-    public Walk(int walkNumber, double BAC) {
+    public Walk(int walkNumber, double BAC, WalkType walkType) {
         this.walkNumber = walkNumber;
         this.BAC = BAC;
+        this.walkType = walkType;
         phoneAccelerometerDataList = new LinkedList<>();
         phoneGyroscopeDataList = new LinkedList<>();
         watchAccelerometerDataList = new LinkedList<>();
         watchGyroscopeDataList = new LinkedList<>();
         heartRateDataList = new LinkedList<>();
         compassDataList = new LinkedList<>();
+    }
+
+    public WalkType getWalkType() {
+        return walkType;
     }
 
     public int getWalkNumber() {

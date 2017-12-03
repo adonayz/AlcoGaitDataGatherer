@@ -1,7 +1,6 @@
 package edu.wpi.alcogaitdatagatherer;
 
 import android.support.v7.widget.RecyclerView;
-import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,19 +9,19 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import java.util.List;
+import java.util.LinkedList;
 
 public class MyWalkReportRecyclerViewAdapter extends RecyclerView.Adapter<MyWalkReportRecyclerViewAdapter.ViewHolder> implements CompoundButton.OnCheckedChangeListener {
 
-    private final List<Walk> walks;
+    private final TestSubject testSubject;
     private final WalkReportFragment.ReportFragmentListener mListener;
-    private SparseBooleanArray checkBoxStates;
+    private LinkedList<Boolean> checkBoxStates;
     private EditText walkReportMessageInput;
 
-    public MyWalkReportRecyclerViewAdapter(List<Walk> walks, WalkReportFragment.ReportFragmentListener listener) {
-        this.walks = walks;
+    public MyWalkReportRecyclerViewAdapter(TestSubject testSubject, WalkReportFragment.ReportFragmentListener listener) {
+        this.testSubject = testSubject;
         mListener = listener;
-        checkBoxStates = new SparseBooleanArray((walks.size()));
+        checkBoxStates = testSubject.getBooleanWalksList();
     }
 
     @Override
@@ -43,33 +42,32 @@ public class MyWalkReportRecyclerViewAdapter extends RecyclerView.Adapter<MyWalk
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         // If view is not the text box (EditText)
-        if (!(position == walks.size())) {
-            holder.walk = walks.get(position);
-            holder.walkNumberView.setText("Walk " + holder.walk.getWalkNumber());
-            holder.walkDetailsView.setText(holder.walk.getSampleSize() + " data samples");
+        if (!(position == checkBoxStates.size())) {
+            holder.walkNumber = position + 1;
+            holder.walkNumberView.setText("Walk " + holder.walkNumber);
+            holder.walkDetailsView.setText(testSubject.getSampleSizeMap().get(holder.walkNumber) + " data samples");
             holder.checkBox.setTag(position);
-            holder.checkBox.setChecked(checkBoxStates.get(position, false));
+            holder.checkBox.setChecked(checkBoxStates.get(position));
             holder.checkBox.setOnCheckedChangeListener(this);
         }
     }
 
     @Override
     public int getItemCount() {
-        return walks.size() + 1;
+        return checkBoxStates.size() + 1;
     }
 
     @Override
     public int getItemViewType(int position) {
-        return (position == walks.size()) ? R.layout.report_text_box : R.layout.fragment_walkreport;
+        return (position == checkBoxStates.size()) ? R.layout.report_text_box : R.layout.fragment_walkreport;
     }
 
     public boolean isChecked(int position) {
-        return checkBoxStates.get(position, false);
+        return checkBoxStates.get(position);
     }
 
     public void setChecked(int position, boolean isChecked) {
-        checkBoxStates.put(position, isChecked);
-
+        checkBoxStates.set(position, isChecked);
     }
 
     public void toggle(int position) {
@@ -78,7 +76,7 @@ public class MyWalkReportRecyclerViewAdapter extends RecyclerView.Adapter<MyWalk
 
     @Override
     public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-        checkBoxStates.put((Integer) compoundButton.getTag(), b);
+        checkBoxStates.set((Integer) compoundButton.getTag(), b);
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
@@ -86,7 +84,7 @@ public class MyWalkReportRecyclerViewAdapter extends RecyclerView.Adapter<MyWalk
         final TextView walkNumberView;
         final TextView walkDetailsView;
         final CheckBox checkBox;
-        Walk walk;
+        int walkNumber;
 
         ViewHolder(View view) {
             super(view);
@@ -99,7 +97,7 @@ public class MyWalkReportRecyclerViewAdapter extends RecyclerView.Adapter<MyWalk
 
         @Override
         public String toString() {
-            return super.toString() + " 'Walk " + walk.getWalkNumber() + "'";
+            return super.toString() + " 'Walk " + walkNumber + "'";
         }
     }
 

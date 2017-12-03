@@ -1,6 +1,8 @@
 package edu.wpi.alcogaitdatagatherer;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
@@ -14,8 +16,11 @@ public class TestSubject implements Serializable {
     private double weight;
     private int heightFeet;
     private int heightInches;
-    private LinkedList<Walk> successfulWalks;
-    private LinkedList<Walk> reportedWalks;
+    private WalkHolder currentWalkHolder;
+    private LinkedList<Boolean> booleanWalksList; // changed from Walk Object to Integer in order to decrease memory usage
+    private HashMap<Integer, Integer> sampleSizeMap;
+    //private LinkedList<Walk> successfulWalks;
+    //private LinkedList<Walk> reportedWalks;
     private String reportMessage;
 
     public TestSubject(String subjectID, Gender gender, int age, double weight, int heightFeet, int heightInches) {
@@ -25,8 +30,10 @@ public class TestSubject implements Serializable {
         this.weight = weight;
         this.heightFeet = heightFeet;
         this.heightInches = heightInches;
-        successfulWalks = new LinkedList<>();
-        reportedWalks = new LinkedList<>();
+        this.booleanWalksList = new LinkedList<>();
+        this.sampleSizeMap = new HashMap<>();
+        //successfulWalks = new LinkedList<>();
+        //reportedWalks = new LinkedList<>();
         reportMessage = "";
     }
 
@@ -54,7 +61,59 @@ public class TestSubject implements Serializable {
         return heightInches;
     }
 
-    public void addWalk(Walk walk){
+    public String getReportMessage() {
+        return reportMessage;
+    }
+
+    public void setReportMessage(String reportMessage) {
+        this.reportMessage = reportMessage;
+    }
+
+    public LinkedList<Boolean> getBooleanWalksList() {
+        return booleanWalksList;
+    }
+
+    public void setBooleanWalksList(LinkedList<Boolean> list) {
+        booleanWalksList = list;
+    }
+
+    public HashMap<Integer, Integer> getSampleSizeMap() {
+        return sampleSizeMap;
+    }
+
+    public WalkHolder getCurrentWalkHolder() {
+        return currentWalkHolder;
+    }
+
+    public void setCurrentWalkHolder(WalkHolder walkHolder) {
+        currentWalkHolder = walkHolder;
+    }
+
+    public void addNewWalkHolder(WalkHolder currentWalkHolder) {
+        addSamplesSize(this.currentWalkHolder.getWalkNumber(), this.currentWalkHolder.getSampleSize());
+        this.currentWalkHolder = currentWalkHolder;
+        booleanWalksList.add(false);
+    }
+
+    public void replaceWalkHolder(WalkHolder currentWalkHolder) {
+        sampleSizeMap.remove(currentWalkHolder.getWalkNumber());
+        this.currentWalkHolder = currentWalkHolder;
+    }
+
+    public int getTotalSampleSize() {
+        int total = 0;
+        for (Iterator<Integer> it = sampleSizeMap.keySet().iterator(); it.hasNext(); ) {
+            total += sampleSizeMap.get(it.next());
+        }
+        return total;
+    }
+
+    public void addSamplesSize(int walkNumber, int sampleSize) {
+        sampleSizeMap.put(walkNumber, sampleSize);
+    }
+
+    // HUGE DESIGN (DATA STRUCTURE) CHANGES TO DECREASE MEMORY USAGE
+    /*public void addWalk(Walk walk){
         successfulWalks.add(walk);
     }
 
@@ -74,19 +133,11 @@ public class TestSubject implements Serializable {
         this.reportedWalks = reportedWalks;
     }
 
-    public String getReportMessage() {
-        return reportMessage;
-    }
-
-    public void setReportMessage(String reportMessage) {
-        this.reportMessage = reportMessage;
-    }
-
     public void clearWalkData(){
         successfulWalks.clear();
     }
 
     public Walk removeLastWalk(){
         return successfulWalks.removeLast();
-    }
+    }*/
 }

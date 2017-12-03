@@ -34,12 +34,10 @@ import java.util.concurrent.Executors;
 public class SurveyListAdapter extends BaseAdapter {
 
     private LayoutInflater inflater;
-    private LinkedList<File> files;
-    private static LinkedList<String> savedIDs = new LinkedList<>();
+    private static LinkedList<File> files;
     private BoxApiFile mFileApi;
     private HomeActivity homeActivity;
     private ListView listView;
-
 
     public class ViewHolder {
         TextView fileIDTextView;
@@ -52,7 +50,6 @@ public class SurveyListAdapter extends BaseAdapter {
         this.homeActivity = homeActivity;
         inflater = LayoutInflater.from(homeActivity);
         this.files = files;
-        savedIDs = new LinkedList<>();
         this.listView = listView;
     }
 
@@ -82,17 +79,13 @@ public class SurveyListAdapter extends BaseAdapter {
         } else {
             holder = (ViewHolder) convertView.getTag();
         }
-        String fileName = file.getName();
-        String fileShouldStartWith = HomeActivity.FILE_SHOULD_START_WITH;
-        String fileShouldEndWith = HomeActivity.FILE_SHOULD_END_WITH;
-
-        String ID = fileName.substring(fileShouldStartWith.length(), fileName.length() - fileShouldEndWith.length()).trim();
-        savedIDs.add(ID);
+        String fileName = file.getName().substring(HomeActivity.FILE_SHOULD_START_WITH.length(), file.getName().length());
 
         SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy   hh:mm a");
         String lastDateModified = sdf.format(file.lastModified());
 
-        holder.fileIDTextView.setText("Subject ID " + ID);
+
+        holder.fileIDTextView.setText("Subject ID " + fileName.trim());
         holder.dateModifiedTextView.setText(lastDateModified);
 
         return convertView;
@@ -108,10 +101,6 @@ public class SurveyListAdapter extends BaseAdapter {
             final int childIndex = pos - firstListItemPosition;
             return listView.getChildAt(childIndex);
         }
-    }
-
-    public static LinkedList<String> getSavedIDs() {
-        return savedIDs;
     }
 
     public void syncWithBox(BoxApiFile mFileApi){
@@ -180,6 +169,14 @@ public class SurveyListAdapter extends BaseAdapter {
                 customSurveyView.displayUploadError();
             }
         }
+    }
+
+    public static LinkedList<String> getSavedIDs() {
+        LinkedList<String> result = new LinkedList<>();
+        for (File file : files) {
+            result.add(file.getName().trim());
+        }
+        return result;
     }
 
     private void showToast(final String text) {

@@ -34,9 +34,7 @@
             android:layout_marginTop="36sp"
             android:layout_marginStart="@dimen/margin_left"
             android:layout_marginEnd="@dimen/margin_right"
-            android:layout_marginLeft="@dimen/margin_left"
-            android:layout_marginRight="@dimen/margin_right"
-            android:paddingBottom="120sp"
+            android:paddingBottom="140sp"
             android:orientation="vertical">
 
             <TextView

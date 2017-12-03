@@ -10,11 +10,12 @@ import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+
+import java.util.LinkedList;
 
 public class WalkReportFragment extends DialogFragment {
 
@@ -73,7 +74,7 @@ public class WalkReportFragment extends DialogFragment {
             recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
         }
 
-        recyclerView.setAdapter(new MyWalkReportRecyclerViewAdapter(testSubject.getSuccessfulWalks(), mListener));
+        recyclerView.setAdapter(new MyWalkReportRecyclerViewAdapter(testSubject, mListener));
 
         saveButton = view.findViewById(R.id.reportSave);
         cancelButton = view.findViewById(R.id.reportCancel);
@@ -114,7 +115,6 @@ public class WalkReportFragment extends DialogFragment {
     }
 
     public interface ReportFragmentListener {
-        // TODO: Update argument type and name
-        void submitReport(SparseBooleanArray checkBoxStates, String reportMessage);
+        void submitReport(LinkedList<Boolean> checkBoxStates, String reportMessage);
     }
 }

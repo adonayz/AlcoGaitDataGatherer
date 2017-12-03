@@ -32,7 +32,7 @@ public class HomeActivity extends AppCompatActivity implements BoxAuthentication
     private ListView surveyListView;
     private LinkedList<File> surveyFiles;
     static final String FILE_SHOULD_START_WITH = "ID_";
-    static final String FILE_SHOULD_END_WITH = ".csv";
+    //static final String FILE_SHOULD_END_WITH = ".csv";
     private static final int READ_WRITE_PERMISSION_CODE = 1000;
 
     private static final String CLIENT_ID = "jqkqfexx2sdtk8fd145dwfexr851drh3";
@@ -117,12 +117,15 @@ public class HomeActivity extends AppCompatActivity implements BoxAuthentication
         try{
             for(File file: allFilesFromDir){
                 String fileName = file.getName();
-                if(fileName.length() > 7){
+                if (fileName.length() == 7 && file.isDirectory() && fileName.startsWith(FILE_SHOULD_START_WITH)) {
+                    surveyFiles.add(file);
+                }
+                /*if(fileName.length() > 7){
                     if(fileName.substring(0, FILE_SHOULD_START_WITH.length()).equals(FILE_SHOULD_START_WITH)
                             && fileName.substring(fileName.length() - FILE_SHOULD_END_WITH.length(), fileName.length()).equals(FILE_SHOULD_END_WITH)){
                         surveyFiles.add(file);
                     }
-                }
+                }*/
             }
         }catch (NullPointerException e){
             e.printStackTrace();
