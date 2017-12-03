@@ -236,7 +236,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
                 builder2.setTitle("Finish Survey");
                 builder2.setMessage("Are you sure you want to finish survey? Unfinished walk number data will be lost (Walk Number " +
                         sensorRecorder.getTestSubject().getCurrentWalkHolder().getWalkNumber() + ").").setPositiveButton("Yes", dialogClickListener2)
-                        .setNegativeButton("No", dialogClickListener).show();
+                        .setNegativeButton("No", dialogClickListener2).show();
             }
         });
     }
