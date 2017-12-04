@@ -227,7 +227,6 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
                                 break;
 
                             case DialogInterface.BUTTON_NEGATIVE:
-
                                 break;
                         }
                     }
@@ -401,25 +400,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        switch (which) {
-                            case DialogInterface.BUTTON_POSITIVE:
-                                DataGatheringActivity.this.onBackPressed();
-                                DataGatheringActivity.this.finish();
-                                break;
-
-                            case DialogInterface.BUTTON_NEGATIVE:
-                                break;
-                        }
-                    }
-                };
-                AlertDialog.Builder builder = new AlertDialog.Builder(DataGatheringActivity.this);
-                builder.setTitle("Return To Form?");
-                builder.setMessage("Are you sure you want to return to the form? Data for the latest walk number will be lost (#"
-                        + sensorRecorder.getTestSubject().getCurrentWalkHolder().getWalkNumber() + ")").setPositiveButton("Yes", dialogClickListener)
-                        .setNegativeButton("No", dialogClickListener).show();
+                onBackPressed();
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -635,5 +616,28 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageA
         finish();
         Intent intent = new Intent(DataGatheringActivity.this, HomeActivity.class);
         startActivity(intent);
+    }
+
+    @Override
+    public void onBackPressed() {
+        DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                switch (which) {
+                    case DialogInterface.BUTTON_POSITIVE:
+                        DataGatheringActivity.super.onBackPressed();
+                        DataGatheringActivity.this.finish();
+                        break;
+
+                    case DialogInterface.BUTTON_NEGATIVE:
+                        break;
+                }
+            }
+        };
+        AlertDialog.Builder builder = new AlertDialog.Builder(DataGatheringActivity.this);
+        builder.setTitle("Return To Form?");
+        builder.setMessage("Are you sure you want to return to the form? Data for the latest walk number will be lost (#"
+                + sensorRecorder.getTestSubject().getCurrentWalkHolder().getWalkNumber() + ")").setPositiveButton("Yes", dialogClickListener)
+                .setNegativeButton("No", dialogClickListener).show();
     }
 }

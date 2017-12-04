@@ -207,6 +207,7 @@ public class SensorRecorder implements SensorEventListener {
                 switch (which) {
                     case DialogInterface.BUTTON_POSITIVE:
                         bacInput.setText("");
+                        bacInput.setEnabled(true);
                         restartWalkHolder();
                         break;
 
@@ -251,6 +252,7 @@ public class SensorRecorder implements SensorEventListener {
                         if (currentWalkType != WalkType.NORMAL) {
                             walk = testSubject.getCurrentWalkHolder().get(testSubject.getCurrentWalkHolder().getPreviousWalkType(currentWalkType));
                         } else {
+                            bacInput.setEnabled(true);
                             walk = null;
                         }
                         startButton.setText("START WALK");
@@ -387,7 +389,7 @@ public class SensorRecorder implements SensorEventListener {
             for (int i = 0; i < testSubject.getBooleanWalksList().size(); i++) {
                 if (testSubject.getBooleanWalksList().get(i)) {
                     myOutWriter.append(String.valueOf(i + 1));
-                    if (i == testSubject.getBooleanWalksList().size() - 1 && testSubject.getBooleanWalksList().size() > 1) {
+                    if (i != testSubject.getBooleanWalksList().size() - 1 && testSubject.getBooleanWalksList().size() > 1) {
                         myOutWriter.append(", ");
                     }
                     hasReportedWalks = true;
