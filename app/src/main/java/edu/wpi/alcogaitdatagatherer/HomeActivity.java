@@ -2,8 +2,10 @@ package edu.wpi.alcogaitdatagatherer;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -45,8 +47,6 @@ public class HomeActivity extends AppCompatActivity implements BoxAuthentication
     private BoxApiFolder mFolderApi;
     private BoxApiFile mFileApi;
 
-    private boolean boxOptionEnabled = false;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,7 +66,7 @@ public class HomeActivity extends AppCompatActivity implements BoxAuthentication
 
         requestPermissions();
 
-        if (boxOptionEnabled) {
+        if (isBoxPreferenceEnabled()) {
             configureBoxClient();
             initializeBoxSession();
         }
@@ -81,7 +81,7 @@ public class HomeActivity extends AppCompatActivity implements BoxAuthentication
         });
 
         FloatingActionButton uab = (FloatingActionButton) findViewById(R.id.uab);
-        if (boxOptionEnabled) {
+        if (isBoxPreferenceEnabled()) {
             uab.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -181,6 +181,8 @@ public class HomeActivity extends AppCompatActivity implements BoxAuthentication
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            Intent i = new Intent(this, SettingsActivity.class);
+            startActivity(i);
             return true;
         }
 
@@ -242,6 +244,11 @@ public class HomeActivity extends AppCompatActivity implements BoxAuthentication
                 Toast.makeText(HomeActivity.this, text, Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    public boolean isBoxPreferenceEnabled() {
+        SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+        return SP.getBoolean(getString(R.string.box_integration_preference), false);
     }
 
     @Override

@@ -6,4 +6,5 @@
     <string name="update_instruction">Update data for next walk</string>
     <string name="instructions_recording_before_30_seconds">Stop walking when you hear the buzzer</string>
     <string name="instructions_recording_after_30_seconds">Stop when you hear the buzzer</string>
+    <string name="searching">Searching For Watch</string>
 </resources>

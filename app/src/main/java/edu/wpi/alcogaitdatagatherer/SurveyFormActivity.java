@@ -38,13 +38,13 @@ public class SurveyFormActivity extends AppCompatActivity{
 
         isIDUnavailable = false;
 
-        subjectIDInput = (EditText) findViewById(R.id.subjectIDInput);
-        maleRadioButton = (RadioButton) findViewById(R.id.maleRadio);
-        femaleRadioButton = (RadioButton) findViewById(R.id.femaleRadio);
-        ageInput = (EditText) findViewById(R.id.ageInput);
-        weightInput = (EditText) findViewById(R.id.weightInput);
-        heightFeetInput = (EditText) findViewById(R.id.heightFeetInput);
-        heightInchesInput = (EditText) findViewById(R.id.heightInchesInput);
+        subjectIDInput = findViewById(R.id.subjectIDInput);
+        maleRadioButton = findViewById(R.id.maleRadio);
+        femaleRadioButton = findViewById(R.id.femaleRadio);
+        ageInput = findViewById(R.id.ageInput);
+        weightInput = findViewById(R.id.weightInput);
+        heightFeetInput = findViewById(R.id.heightFeetInput);
+        heightInchesInput = findViewById(R.id.heightInchesInput);
 
         subjectIDInput.addTextChangedListener(new TextWatcher() {
             @Override

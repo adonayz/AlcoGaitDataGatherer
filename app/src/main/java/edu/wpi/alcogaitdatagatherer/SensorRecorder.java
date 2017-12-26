@@ -25,6 +25,9 @@ import java.util.LinkedList;
 import java.util.Locale;
 
 import edu.wpi.alcogaitdatagatherercommon.CommonValues;
+import edu.wpi.alcogaitdatagatherercommon.Walk;
+import edu.wpi.alcogaitdatagatherercommon.WalkHolder;
+import edu.wpi.alcogaitdatagatherercommon.WalkType;
 
 import static android.content.Context.SENSOR_SERVICE;
 import static android.hardware.Sensor.TYPE_ACCELEROMETER;
@@ -88,9 +91,9 @@ public class SensorRecorder implements SensorEventListener {
     }
 
     public void registerListeners() {
-        mSensorManager.registerListener(this, mAccelerometer, CommonValues.DELAYINMILLISECONDS * 1000);
-        mSensorManager.registerListener(this, mGyroscope, CommonValues.DELAYINMILLISECONDS * 1000);
-        mSensorManager.registerListener(this, mMagnetometer, CommonValues.DELAYINMILLISECONDS * 1000);
+        mSensorManager.registerListener(this, mAccelerometer, CommonValues.DELAY_IN_MILLISECONDS * 1000);
+        mSensorManager.registerListener(this, mGyroscope, CommonValues.DELAY_IN_MILLISECONDS * 1000);
+        mSensorManager.registerListener(this, mMagnetometer, CommonValues.DELAY_IN_MILLISECONDS * 1000);
     }
 
     public void unregisterListeners() {
@@ -191,9 +194,9 @@ public class SensorRecorder implements SensorEventListener {
                 .setNegativeButton("No", dialogClickListener).show();*/
     }
 
-    public void saveCurrentWalkNumberToCSV(final Window window) {
+    public void saveCurrentWalkNumberToCSV(final Window window, EditText bacInput) {
         this.window = window;
-        new SaveWalkHolderToCSVTask(this, mFolderName, testSubject, window).execute();
+        new SaveWalkHolderToCSVTask(this, mFolderName, testSubject, window, bacInput).execute();
     }
 
     private void updateWalkNumberDisplay() {

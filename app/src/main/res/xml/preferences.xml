@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-
-    <android.support.v7.preference.SwitchPreferenceCompat
+    <SwitchPreference
         android:defaultValue="false"
-        android:key="boc_com_settings"
-        android:title="Connect Box Account" />
+        android:key="@string/wear_collection_preference"
+        android:title="Collect From Watch"
+        android:summary="Collect accelerometer, gyroscope and heart rate data from a smart watch." />
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="@string/box_integration_preference"
+        android:title="Enable Box Integration"
+        android:summary="Allow survey uploads to Box.com accounts directly from the phone." />
 </PreferenceScreen>

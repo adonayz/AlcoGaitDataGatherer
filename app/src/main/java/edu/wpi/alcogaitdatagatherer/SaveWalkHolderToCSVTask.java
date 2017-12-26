@@ -4,12 +4,15 @@ import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.EditText;
 
 import com.opencsv.CSVWriter;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+
+import edu.wpi.alcogaitdatagatherercommon.WalkType;
 
 /**
  * Created by Adonay on 12/1/2017.
@@ -23,19 +26,21 @@ public class SaveWalkHolderToCSVTask extends AsyncTask<Void, Integer, Void> {
     private Window window;
     private final String[] space = {""};
     private SensorRecorder sensorRecorder;
+    private EditText bacInput;
 
-    SaveWalkHolderToCSVTask(SensorRecorder sensorRecorder, String mFolderName, TestSubject testSubject, Window window) {
+    SaveWalkHolderToCSVTask(SensorRecorder sensorRecorder, String mFolderName, TestSubject testSubject, Window window, EditText bacInput) {
         this.mFolderName = mFolderName;
         this.testSubject = testSubject;
         this.window = window;
-        dialog = new ProgressDialog(window.getContext());
+        dialog = new ProgressDialog(bacInput.getContext());
         this.sensorRecorder = sensorRecorder;
-
+        this.bacInput = bacInput;
     }
 
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
+        dialog.setCancelable(false);
         dialog.setTitle("Saving to phone internal storage");
         dialog.setTitle("Writing data to " + mFolderName);
         dialog.setIndeterminate(false);
@@ -111,5 +116,7 @@ public class SaveWalkHolderToCSVTask extends AsyncTask<Void, Integer, Void> {
         dialog.dismiss();
         window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
         sensorRecorder.incrementWalkNumber();
+        bacInput.setEnabled(true);
+        bacInput.setText("");
     }
 }
