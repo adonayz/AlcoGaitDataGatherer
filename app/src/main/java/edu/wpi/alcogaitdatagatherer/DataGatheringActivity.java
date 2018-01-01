@@ -29,7 +29,6 @@ import android.text.method.ScrollingMovementMethod;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
 import android.view.animation.AlphaAnimation;
 import android.widget.Button;
 import android.widget.EditText;
@@ -58,7 +57,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import edu.wpi.alcogaitdatagatherercommon.CommonValues;
+import edu.wpi.alcogaitdatagatherercommon.CommonCode;
 import edu.wpi.alcogaitdatagatherercommon.WalkType;
 import it.sephiroth.android.library.tooltip.Tooltip;
 
@@ -81,14 +80,12 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
     private FrameLayout progressBarHolder;
     private RelativeLayout bottomBarLayout;
     private TextView wearConnectProgressUpdateTextView;
-    private MenuItem refreshItem;
 
     private String mFolderName;
     private CountDownTimer countDownTimer;
     private SensorRecorder sensorRecorder;
     private TestSubject testSubject;
     private boolean isReceivingFromWatch = false;
-    private boolean isWaitingForACK = false;
     private boolean allowBACInput = true;
     private static final int READ_WRITE_PERMISSION_CODE = 1000;
     static final String TB_FOR_WALK_REPORT = "walk_report";
@@ -124,7 +121,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
         //TextView text = (TextView) findViewById(R.id.summary);
 
         countdownTextField = findViewById(R.id.countdown);
-        countdownTextField.setText(Integer.toString(CommonValues.RECORD_TIME_IN_SECONDS));
+        countdownTextField.setText(Integer.toString(CommonCode.RECORD_TIME_IN_SECONDS));
         countdown_title = findViewById(R.id.countdown_title);
         startButton = findViewById(R.id.start_recording);
         stopButton = findViewById(R.id.stop_recording);
@@ -148,7 +145,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
             if ((bacInput.getText().toString().trim().isEmpty()) && allowBACInput) {
                 bacInput.setError("Please enter BAC data.");
             } else {
-                startRecording(bacInput.getText().toString().trim(), false);
+                startRecording(bacInput.getText().toString().trim());
             }
         });
 
@@ -156,7 +153,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
 
         restartButton.setOnClickListener(view -> {
             sensorRecorder.restartCurrentWalkNumber(bacInput);
-            countDownTimer.onTick(CommonValues.RECORD_TIME_IN_SECONDS * 1000);
+            countDownTimer.onTick(CommonCode.RECORD_TIME_IN_SECONDS * 1000);
         });
 
         reDoWalkButton.setOnClickListener(view -> {
@@ -222,7 +219,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
     }
 
     private void setupTimer(){
-        countDownTimer = new CountDownTimer(CommonValues.RECORD_TIME_IN_SECONDS * 1000, 1000) {
+        countDownTimer = new CountDownTimer(CommonCode.RECORD_TIME_IN_SECONDS * 1000, 1000) {
 
             public void onTick(long millisUntilFinished) {
                 countdownTextField.setText(String.valueOf(millisUntilFinished / 1000));
@@ -242,9 +239,9 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
         };
     }
 
-    private void startRecording(String bacInputText, boolean isActionFromWearable){
+    private void startRecording(String bacInputText) {
         if(!sensorRecorder.isRecording()){
-            if (testSubject.getCurrentWalkHolder().getNextWalkType() == null) {
+            if (sensorRecorder.getTestSubject().getCurrentWalkHolder().getNextWalkType() == null) {
                 requestSave();
             } else {
                 Double BAC = Double.valueOf(bacInputText);
@@ -252,15 +249,11 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
                 samplesReceivedFromWatch = 0;
                 totalSampleSizeInWearable = 0;
 
-                if (!isActionFromWearable) {
-                    notifyWearableActivity(CommonValues.START_RECORDING_PATH, bacInputText);
-                }
-
-                if (isActionFromWearable) {
-                    bacInput.setText(String.valueOf(BAC));
-                }
-
                 sensorRecorder.startRecording(BAC);
+
+                if (isWearablePreferenceEnabled()) {
+                    notifyWearableActivity(CommonCode.START_RECORDING_PATH, sensorRecorder.getCurrentWalkType().toString());
+                }
 
                 startButton.setVisibility(View.GONE);
                 stopButton.setVisibility(View.VISIBLE);
@@ -280,7 +273,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
                 if (isReceivingFromWatch) {
                     return;
                 }
-                notifyWearableActivity(CommonValues.WEAR_MESSAGE_PATH, CommonValues.STOP_RECORDING);
+                notifyWearableActivity(CommonCode.WEAR_MESSAGE_PATH, CommonCode.STOP_RECORDING);
                 startProgressBar();
                 isReceivingFromWatch = true;
             }
@@ -308,10 +301,10 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
             new CheckWearableReachability().execute();
             Wearable.getCapabilityClient(this).addListener(
                     this,
-                    CommonValues.WEAR_DISCOVERY_NAME);
+                    CommonCode.WEAR_DISCOVERY_NAME);
             Wearable.getMessageClient(this).addListener(this);
             Wearable.getDataClient(this).addListener(this);
-            notifyWearableActivity(CommonValues.WEAR_HOME_ACTIVITY_PATH, CommonValues.OPEN_APP);
+            notifyWearableActivity(CommonCode.WEAR_HOME_ACTIVITY_PATH, CommonCode.OPEN_APP);
         }
     }
 
@@ -323,8 +316,8 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
             }
         }
         if (isWearablePreferenceEnabled()) {
-            notifyWearableActivity(CommonValues.WEAR_MESSAGE_PATH, CommonValues.WEARABLE_DISCONNECTED);
-            Wearable.getCapabilityClient(this).removeListener(this, CommonValues.WEAR_DISCOVERY_NAME);
+            notifyWearableActivity(CommonCode.WEAR_MESSAGE_PATH, CommonCode.WEARABLE_DISCONNECTED);
+            Wearable.getCapabilityClient(this).removeListener(this, CommonCode.WEAR_DISCOVERY_NAME);
             Wearable.getMessageClient(this).removeListener(this);
             Wearable.getDataClient(this).removeListener(this);
         }
@@ -410,30 +403,28 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
     @Override
     public void onMessageReceived(@NonNull final MessageEvent messageEvent) {
         runOnUiThread(() -> {
-            if (messageEvent.getPath().equalsIgnoreCase(CommonValues.WEAR_MESSAGE_PATH)) {
+            if (messageEvent.getPath().equalsIgnoreCase(CommonCode.WEAR_MESSAGE_PATH)) {
                 switch (new String(messageEvent.getData())) {
-                    case CommonValues.REDO_PREVIOUS_WALK:
+                    case CommonCode.REDO_PREVIOUS_WALK:
                         break;
-                    case CommonValues.RESTART:
+                    case CommonCode.RESTART:
                         break;
-                    case CommonValues.WEARABLE_DISCONNECTED:
+                    case CommonCode.WEARABLE_DISCONNECTED:
                         showToast("WEARABLE DISCONNECTED");
                         break;
-                    case CommonValues.CHECK_IF_APP_OPEN:
-                        notifyWearableActivity(CommonValues.WEAR_MESSAGE_PATH, CommonValues.APP_OPEN_ACK);
+                    case CommonCode.CHECK_IF_APP_OPEN:
+                        notifyWearableActivity(CommonCode.WEAR_MESSAGE_PATH, CommonCode.APP_OPEN_ACK);
                         stopProgressBar();
                         showToast("CONNECTION REQUEST RECEIVED");
                         break;
-                    case CommonValues.APP_OPEN_ACK:
+                    case CommonCode.APP_OPEN_ACK:
                         stopProgressBar();
                         showToast("ACK_CONFIRMED");
                         break;
                     default:
                         break;
                 }
-            } else if (messageEvent.getPath().equalsIgnoreCase(CommonValues.START_RECORDING_PATH)) {
-                startRecording(new String(messageEvent.getData()), true);
-            } else if (messageEvent.getPath().equalsIgnoreCase(CommonValues.STOP_RECORDING_PATH)) {
+            } else if (messageEvent.getPath().equalsIgnoreCase(CommonCode.STOP_RECORDING_PATH)) {
                 totalSampleSizeInWearable = Integer.valueOf(new String(messageEvent.getData()));
                 stopRecording();
             }
@@ -449,11 +440,10 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
                     Uri uri = dataItem.getUri();
                     String path = uri.getPath();
 
-                    if (path.startsWith(CommonValues.SENSOR_PATH)) {
-                        if (DataMapItem.fromDataItem(dataItem).getDataMap().getString(CommonValues.SENSOR_NAME).equals(CommonValues.TRANSFER_FINISHED_STRING) &&
-                                DataMapItem.fromDataItem(dataItem).getDataMap().getLong(CommonValues.TIMESTAMP) == CommonValues.TRANSFER_FINISHED_LONG) {
-                            resetRecordViews(sensorRecorder.stopRecording());
-                            isReceivingFromWatch = false;
+                    if (path.startsWith(CommonCode.SENSOR_PATH)) {
+                        if (DataMapItem.fromDataItem(dataItem).getDataMap().getString(CommonCode.SENSOR_NAME).equals(CommonCode.TRANSFER_FINISHED_STRING) &&
+                                DataMapItem.fromDataItem(dataItem).getDataMap().getLong(CommonCode.TIMESTAMP) == CommonCode.TRANSFER_FINISHED_LONG) {
+                            stopWaitingForWatch();
                             return;
                         }
                         sensorRecorder.addWearableSensorData(
@@ -515,8 +505,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
     }
 
     private void saveCurrentWalkNumber() {
-        Window window = getWindow();
-        sensorRecorder.saveCurrentWalkNumberToCSV(window, bacInput);
+        sensorRecorder.saveCurrentWalkNumberToCSV(bacInput);
         //createToolTip(bacInput, Tooltip.Gravity.RIGHT, "Update BAC for next walk");
     }
 
@@ -546,6 +535,15 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
             createToolTip(bacInput, Tooltip.Gravity.RIGHT, "Update BAC for next walk");
         }*/
         disableBar(false);
+    }
+
+    public void stopWaitingForWatch() {
+        boolean allowInput = true;
+        if (sensorRecorder.isRecording()) {
+            allowInput = sensorRecorder.stopRecording();
+        }
+        resetRecordViews(allowInput);
+        isReceivingFromWatch = false;
     }
 
     @Override
@@ -609,9 +607,9 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
                 return true;
             case R.id.refresh_watch_icon:
                 if (isWearablePreferenceEnabled()) {
-                    notifyWearableActivity(CommonValues.WEAR_MESSAGE_PATH, CommonValues.REFRESH_CONNECTION);
+                    notifyWearableActivity(CommonCode.WEAR_MESSAGE_PATH, CommonCode.REFRESH_CONNECTION);
                     new CheckWearableReachability().execute();
-                    stopRecording();
+                    //stopWaitingForWatch();
                     return true;
                 }
                 return false;
@@ -633,7 +631,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
             try {
                 capabilityInfo = Tasks.await(
                         Wearable.getCapabilityClient(DataGatheringActivity.this).getCapability(
-                                CommonValues.WEAR_DISCOVERY_NAME, CapabilityClient.FILTER_REACHABLE));
+                                CommonCode.WEAR_DISCOVERY_NAME, CapabilityClient.FILTER_REACHABLE));
             } catch (ExecutionException | InterruptedException e) {
                 e.printStackTrace();
             }
@@ -644,9 +642,9 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
         protected void onPostExecute(CapabilityInfo result) {
             if (result != null) {
                 if (result.getNodes().size() > 0) {
-                    showToast("WEARABLE IS CONNECTED");
-                    wearConnectProgressUpdateTextView.setText("Awaiting Response");
-                    notifyWearableActivity(CommonValues.WEAR_MESSAGE_PATH, CommonValues.CHECK_IF_APP_OPEN);
+                    showToast("WEARABLE IS REACHABLE");
+                    wearConnectProgressUpdateTextView.setText("Awaiting Watch Response");
+                    notifyWearableActivity(CommonCode.WEAR_MESSAGE_PATH, CommonCode.CHECK_IF_APP_OPEN);
                     return;
                 }
             }
@@ -656,8 +654,8 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
 
     public void watchReachabilityErrorDialog() {
         AlertDialog.Builder alert = new AlertDialog.Builder(DataGatheringActivity.this);
-        alert.setTitle("Cannot Find Watch");
-        alert.setMessage("The watch is not connected to the phone. We recommend that you save your current progress and leave the session. If you want to record without the watch, go back to 'Settings' in the home page and disable the watch data collection feature.");
+        alert.setTitle("Watch Is Not Reachable");
+        alert.setMessage(R.string.watch_reachability_error_dialog);
         alert.setPositiveButton("OK", null);
         alert.show();
     }

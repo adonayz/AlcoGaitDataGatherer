@@ -1,10 +1,6 @@
 <resources>
     <string name="app_name">AlcoGaitDataGatherer</string>
-    <string name="hello_world">Hello World!</string>
-    <string name="walk_instructions_title">Walk in a straight line</string>
-    <string name="walk_instructions_detail">Walk for 1 minute. \n30 seconds forward \nand 30 seconds back.</string>
-    <string name="update_instruction">Update data for next walk</string>
-    <string name="instructions_recording_before_30_seconds">Stop walking when you hear the buzzer</string>
-    <string name="instructions_recording_after_30_seconds">Stop when you hear the buzzer</string>
+    <string name="use_phone_instruction">Setup On Phone</string>
+    <string name="walk_instructions_detail">Stop walking when you hear/feel the buzzer.</string>
     <string name="searching">Searching For Watch</string>
 </resources>

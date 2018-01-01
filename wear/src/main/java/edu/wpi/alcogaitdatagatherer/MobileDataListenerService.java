@@ -8,7 +8,7 @@ import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
 
-import edu.wpi.alcogaitdatagatherercommon.CommonValues;
+import edu.wpi.alcogaitdatagatherercommon.CommonCode;
 
 /**
  * Created by Adonay on 10/27/2017.
@@ -31,7 +31,7 @@ public class MobileDataListenerService extends WearableListenerService implement
     @Override
     public void onMessageReceived(@NonNull MessageEvent messageEvent) {
         super.onMessageReceived(messageEvent);
-        if (messageEvent.getPath().equalsIgnoreCase(CommonValues.WEAR_HOME_ACTIVITY_PATH) || CommonValues.OPEN_APP.equalsIgnoreCase(new String(messageEvent.getData()))) {
+        if (messageEvent.getPath().equalsIgnoreCase(CommonCode.WEAR_HOME_ACTIVITY_PATH) || CommonCode.OPEN_APP.equalsIgnoreCase(new String(messageEvent.getData()))) {
             Intent intent = new Intent(this , WearHomeActivity.class);
             startActivity(intent);
         }

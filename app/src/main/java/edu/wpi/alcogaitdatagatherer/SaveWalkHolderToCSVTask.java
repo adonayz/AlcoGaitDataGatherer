@@ -1,9 +1,8 @@
 package edu.wpi.alcogaitdatagatherer;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.os.AsyncTask;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.EditText;
 
 import com.opencsv.CSVWriter;
@@ -18,22 +17,20 @@ import edu.wpi.alcogaitdatagatherercommon.WalkType;
  * Created by Adonay on 12/1/2017.
  */
 
-public class SaveWalkHolderToCSVTask extends AsyncTask<Void, Integer, Void> {
+public class SaveWalkHolderToCSVTask extends AsyncTask<Void, Integer, Boolean> {
     private int savedSamples = 0;
     private ProgressDialog dialog;
     private String mFolderName;
     private TestSubject testSubject;
-    private Window window;
     private final String[] space = {""};
     private SensorRecorder sensorRecorder;
     private EditText bacInput;
 
-    SaveWalkHolderToCSVTask(SensorRecorder sensorRecorder, String mFolderName, TestSubject testSubject, Window window, EditText bacInput) {
-        this.mFolderName = mFolderName;
-        this.testSubject = testSubject;
-        this.window = window;
-        dialog = new ProgressDialog(bacInput.getContext());
+    SaveWalkHolderToCSVTask(SensorRecorder sensorRecorder, String mFolderName, EditText bacInput) {
         this.sensorRecorder = sensorRecorder;
+        this.mFolderName = mFolderName;
+        this.testSubject = sensorRecorder.getTestSubject();
+        dialog = new ProgressDialog(bacInput.getContext());
         this.bacInput = bacInput;
     }
 
@@ -49,12 +46,10 @@ public class SaveWalkHolderToCSVTask extends AsyncTask<Void, Integer, Void> {
         int max = testSubject.getCurrentWalkHolder().getSampleSize();
         dialog.setMax(max);
         dialog.show();
-        window.setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
-                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
     }
 
     @Override
-    protected Void doInBackground(Void... voids) {
+    protected Boolean doInBackground(Void... voids) {
         String fileName = mFolderName + File.separator + "walk_" + testSubject.getCurrentWalkHolder().getWalkNumber() + ".csv";
         File f = new File(fileName);
         try {
@@ -100,8 +95,9 @@ public class SaveWalkHolderToCSVTask extends AsyncTask<Void, Integer, Void> {
             writer.close();
         } catch (IOException e) {
             e.printStackTrace();
+            return false;
         }
-        return null;
+        return true;
     }
 
     @Override
@@ -111,12 +107,21 @@ public class SaveWalkHolderToCSVTask extends AsyncTask<Void, Integer, Void> {
     }
 
     @Override
-    protected void onPostExecute(Void result) {
+    protected void onPostExecute(Boolean result) {
         super.onPostExecute(result);
         dialog.dismiss();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
-        sensorRecorder.incrementWalkNumber();
-        bacInput.setEnabled(true);
-        bacInput.setText("");
+        if (result) {
+            sensorRecorder.incrementWalkNumber();
+            bacInput.setEnabled(true);
+            bacInput.setText("");
+        } else {
+            //show file save error dialog
+            AlertDialog.Builder alert = new AlertDialog.Builder(bacInput.getContext());
+            alert.setTitle("Save Error");
+            alert.setMessage("An error occurred while saving the data to file. Would you like to try saving again?");
+            alert.setPositiveButton("YES", (dialogInterface, i) -> new SaveWalkHolderToCSVTask(sensorRecorder, mFolderName, bacInput).execute());
+            alert.setNegativeButton("NO", null);
+            alert.show();
+        }
     }
 }

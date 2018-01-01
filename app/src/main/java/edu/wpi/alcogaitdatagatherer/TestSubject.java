@@ -9,8 +9,6 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import edu.wpi.alcogaitdatagatherercommon.WalkHolder;
-
 /**
  * Created by Adonay on 9/27/2017.
  */

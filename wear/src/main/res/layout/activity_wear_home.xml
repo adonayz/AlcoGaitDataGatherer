@@ -12,56 +12,27 @@
         app:boxedEdges="all">
 
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:layout_gravity="center">
-
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical">
             <TextView
                 android:id="@+id/instruction"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="@string/walk_instructions_detail"
+                android:text="@string/use_phone_instruction"
+                android:textSize="30sp"
                 android:textAlignment="center"/>
-
-            <LinearLayout
-                android:id="@+id/bacInfoLayout"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-                <TextView
-                    android:gravity="center"
-                    android:layout_height="wrap_content"
-                    android:layout_width="match_parent"
-                    android:text="Enter BAC : "
-                    android:textColor="@color/colorAccent"/>
-
-                <EditText
-                    android:id="@+id/bacInput"
-                    android:layout_width="80sp"
-                    android:textSize="14sp"
-                    android:layout_height="wrap_content"
-                    android:inputType="numberDecimal"
-                    android:hint="e.g. 0.4"
-                    android:backgroundTint="@color/colorAccent"/>
-            </LinearLayout>
 
             <TextView
                 android:id="@+id/countdown"
-                android:textSize="30sp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
+                android:textAlignment="center"
+                android:textSize="30sp"
                 android:visibility="gone"/>
-
-            <ImageButton
-                android:id="@+id/startStopButton"
-                android:background="@null"
-                android:layout_height="50sp"
-                android:layout_width="50sp"
-                android:src="@drawable/ic_action_start"
-                android:layout_gravity="center"/>
         </LinearLayout>
 
     </FrameLayout>

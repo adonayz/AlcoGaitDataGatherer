@@ -8,7 +8,6 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.util.Log;
 import android.view.View;
-import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -19,14 +18,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.LinkedList;
-import java.util.Locale;
 
-import edu.wpi.alcogaitdatagatherercommon.CommonValues;
-import edu.wpi.alcogaitdatagatherercommon.Walk;
-import edu.wpi.alcogaitdatagatherercommon.WalkHolder;
+import edu.wpi.alcogaitdatagatherercommon.CommonCode;
 import edu.wpi.alcogaitdatagatherercommon.WalkType;
 
 import static android.content.Context.SENSOR_SERVICE;
@@ -39,7 +33,7 @@ import static android.hardware.Sensor.TYPE_MAGNETIC_FIELD;
  * Created by Adonay on 9/11/2017.
  */
 
-public class SensorRecorder implements SensorEventListener {
+public class SensorRecorder extends CommonCode implements SensorEventListener {
 
     private TestSubject testSubject;
     private Walk walk;
@@ -47,7 +41,6 @@ public class SensorRecorder implements SensorEventListener {
     private TextView walkNumberDisplay;
     private TextView walkLogDisplay;
     private Button startButton;
-    private Window window;
 
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
@@ -59,16 +52,12 @@ public class SensorRecorder implements SensorEventListener {
     private float[] magVal;
     private LinkedList<Walk> logQueue;
 
-    private SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss.SSS", Locale.US);
-    private final int MAXLOGS = 5;
     private String mFolderName = null;
     private boolean isRecording;
-    private Double BAC;
     private int currentWalkNumber;
     private WalkType currentWalkType;
     private String TAG = "SensorRecorder";
     private static final float ALPHA = 0.15f;
-    private DialogInterface.OnClickListener dialogClickListener;
 
     SensorRecorder(DataGatheringActivity gatheringActivity, String mFolderName, TestSubject testSubject, TextView walkNumberDisplay, TextView walkLogDisplay, Button startButton) {
         this.testSubject = testSubject;
@@ -91,9 +80,9 @@ public class SensorRecorder implements SensorEventListener {
     }
 
     public void registerListeners() {
-        mSensorManager.registerListener(this, mAccelerometer, CommonValues.DELAY_IN_MILLISECONDS * 1000);
-        mSensorManager.registerListener(this, mGyroscope, CommonValues.DELAY_IN_MILLISECONDS * 1000);
-        mSensorManager.registerListener(this, mMagnetometer, CommonValues.DELAY_IN_MILLISECONDS * 1000);
+        mSensorManager.registerListener(this, mAccelerometer, DELAY_IN_MILLISECONDS * 1000);
+        mSensorManager.registerListener(this, mGyroscope, DELAY_IN_MILLISECONDS * 1000);
+        mSensorManager.registerListener(this, mMagnetometer, DELAY_IN_MILLISECONDS * 1000);
     }
 
     public void unregisterListeners() {
@@ -112,11 +101,11 @@ public class SensorRecorder implements SensorEventListener {
 
             if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
                 accelVal = lowPass(sensorEvent.values.clone(), accelVal);
-                walk.addPhoneAccelerometerData(generatePrintableSensorData(sensorName, accelVal, sensorEvent.timestamp));
+                walk.addPhoneAccelerometerData(generatePrintableSensorData(sensorName, accelVal, sensorEvent.accuracy, sensorEvent.timestamp));
             }
             if (sensorEvent.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
                 gyroVal = lowPass(sensorEvent.values.clone(), gyroVal);
-                walk.addPhoneGyroscopeData(generatePrintableSensorData(sensorName, gyroVal, sensorEvent.timestamp));
+                walk.addPhoneGyroscopeData(generatePrintableSensorData(sensorName, gyroVal, sensorEvent.accuracy, sensorEvent.timestamp));
             }
             if (sensorEvent.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
                 magVal = lowPass(sensorEvent.values.clone(), magVal);
@@ -128,7 +117,7 @@ public class SensorRecorder implements SensorEventListener {
                 if (success) {
                     float compassVal[] = new float[3];
                     SensorManager.getOrientation(R, compassVal);
-                    walk.addCompasData(generatePrintableSensorData("Compass", compassVal, sensorEvent.timestamp));
+                    walk.addCompassData(generatePrintableSensorData("Compass", compassVal, sensorEvent.accuracy, sensorEvent.timestamp));
                 }
             }
         }
@@ -143,7 +132,6 @@ public class SensorRecorder implements SensorEventListener {
         isRecording = true;
         registerListeners();
         walkLogDisplay.setVisibility(View.GONE);
-        this.BAC = BAC;
         if (currentWalkType != null) {
             walk = new Walk(testSubject.getCurrentWalkHolder().getWalkNumber(), BAC, currentWalkType);
         }
@@ -157,12 +145,12 @@ public class SensorRecorder implements SensorEventListener {
         testSubject.setCurrentWalkHolder(testSubject.getCurrentWalkHolder().addWalk(walk));
 
         currentWalkType = testSubject.getCurrentWalkHolder().getNextWalkType();
+        updateWalkLogDisplay(true);
         if (currentWalkType != null) {
-            updateWalkLogDisplay(true);
             updateWalkNumberDisplay();
             return true;
         } else {
-            startButton.setText("Finish Walk");
+            startButton.setText("Save Walk");
             return false;
         }
 
@@ -194,9 +182,8 @@ public class SensorRecorder implements SensorEventListener {
                 .setNegativeButton("No", dialogClickListener).show();*/
     }
 
-    public void saveCurrentWalkNumberToCSV(final Window window, EditText bacInput) {
-        this.window = window;
-        new SaveWalkHolderToCSVTask(this, mFolderName, testSubject, window, bacInput).execute();
+    public void saveCurrentWalkNumberToCSV(EditText bacInput) {
+        new SaveWalkHolderToCSVTask(this, mFolderName, bacInput).execute();
     }
 
     private void updateWalkNumberDisplay() {
@@ -276,8 +263,10 @@ public class SensorRecorder implements SensorEventListener {
 
 
     void updateWalkLogDisplay(boolean addNewWalk) {
+        int MAX_LOGS = 5;
+
         if (addNewWalk) {
-            if (logQueue.size() >= MAXLOGS) {
+            if (logQueue.size() >= MAX_LOGS) {
                 logQueue.removeFirst();
             }
 
@@ -285,7 +274,7 @@ public class SensorRecorder implements SensorEventListener {
         }
 
         String walkLog;
-        walkLog = "Walk Log (Last " + MAXLOGS + " Walks):";
+        walkLog = "Walk Log (Last " + MAX_LOGS + " Walks):";
         for (int i = logQueue.size() - 1; i >= 0; i--) {
             Walk aWalk = logQueue.get(i);
             walkLog += "\nBAC " + aWalk.getBAC() + " was recorded for Walk Number " + aWalk.getWalkNumber() + " : " + aWalk.getWalkType().toString();
@@ -302,19 +291,20 @@ public class SensorRecorder implements SensorEventListener {
     public void addWearableSensorData(int sensorType, DataMap dataMap) {
         if (isRecording) {
             String[] sensorData;
-            String sensorName = dataMap.getString(CommonValues.SENSOR_NAME);
-            float[] values = dataMap.getFloatArray(CommonValues.VALUES);
-            long timestamp = dataMap.getLong(CommonValues.TIMESTAMP);
+            String sensorName = dataMap.getString(SENSOR_NAME);
+            float[] values = dataMap.getFloatArray(VALUES);
+            int accuracy = dataMap.getInt(ACCURACY);
+            long timestamp = dataMap.getLong(TIMESTAMP);
 
             if (values.length > 0) {
                 if (sensorType == TYPE_HEART_RATE) {
-                    sensorData = generatePrintableSensorData(sensorName, values, timestamp);
+                    sensorData = generatePrintableSensorData(sensorName, values, accuracy, timestamp);
                     walk.addHeartRateData(sensorData);
                 } else if (sensorType == TYPE_ACCELEROMETER) {
-                    sensorData = generatePrintableSensorData(sensorName, values, timestamp);
+                    sensorData = generatePrintableSensorData(sensorName, values, accuracy, timestamp);
                     walk.addWatchAccelerometerData(sensorData);
                 } else if (sensorType == TYPE_GYROSCOPE) {
-                    sensorData = generatePrintableSensorData(sensorName, values, timestamp);
+                    sensorData = generatePrintableSensorData(sensorName, values, accuracy, timestamp);
                     walk.addWatchGyroscopeData(sensorData);
                 }
             }
@@ -341,32 +331,6 @@ public class SensorRecorder implements SensorEventListener {
         }
         return output;
     }
-
-    private String[] generatePrintableSensorData(String sensorName, float[] values, long timestamp) {
-        String[] result = new String[values.length + 2];
-        result[0] = sensorName;
-        int i;
-        for (i = 1; i <= values.length; i++) {
-            result[i] = String.valueOf(values[i - 1]);
-        }
-
-        result[i] = simpleDateFormat.format(new Date(getCurrentTimeFromSensor(timestamp)));
-
-        return result;
-    }
-
-    private long getCurrentTimeFromSensor(long sensorTimestamp) {
-        return ((((new Date()).getTime() * 1000000L) - System.nanoTime()) + sensorTimestamp) / 1000000L;
-    }
-
-    /*private void showToast(final String text) {
-        gatheringActivity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(gatheringActivity, text, Toast.LENGTH_LONG).show();
-            }
-        });
-    }*/
 
     public void incrementWalkNumber() {
         currentWalkNumber++;
