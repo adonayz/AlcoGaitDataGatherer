@@ -52,12 +52,13 @@ public class CommonCode {
 
         result[i++] = String.valueOf(accuracy);
 
-        result[i] = simpleDateFormat.format(new Date(getCurrentTimeFromSensor(timestamp)));
+        //result[i] = simpleDateFormat.format(new Date(getCurrentTimeFromSensor(timestamp)));
+        result[i] = simpleDateFormat.format(new Date(System.currentTimeMillis()));
 
         return result;
     }
 
-    private static long getCurrentTimeFromSensor(long sensorTimestamp) {
+    /*private static long getCurrentTimeFromSensor(long sensorTimestamp) {
         return ((((new Date()).getTime() * 1000000L) - System.nanoTime()) + sensorTimestamp) / 1000000L;
-    }
+    }*/
 }

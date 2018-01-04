@@ -199,6 +199,7 @@ public class SurveyFormActivity extends AppCompatActivity{
                     Intent intent = new Intent(SurveyFormActivity.this, DataGatheringActivity.class);
                     intent.putExtra("test_subject", testSubject);
                     startActivity(intent);
+                    finish();
                 }
             }
         });

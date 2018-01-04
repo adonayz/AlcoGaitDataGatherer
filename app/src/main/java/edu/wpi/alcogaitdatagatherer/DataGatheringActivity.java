@@ -102,7 +102,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
 
         configureButtons();
 
-        prepareStorageLocation();
+        prepareStoragePath();
 
         sensorRecorder = new SensorRecorder(this, mFolderName, testSubject, walkNumberDisplay, walkLogDisplay, startButton);
 
@@ -206,7 +206,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
         });
     }
 
-    private void prepareStorageLocation() {
+    private void prepareStoragePath() {
         String baseDir = android.os.Environment.getExternalStorageDirectory().getAbsolutePath() + "/AlcoGaitDataGatherer/";
         String folderName = "ID_" + testSubject.getSubjectID().trim();
         mFolderName = baseDir + folderName + "/";
@@ -317,7 +317,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
     protected void onPause(){
         if (sensorRecorder != null) {
             if (sensorRecorder.isRecording()) {
-                sensorRecorder.stopRecording();
+                sensorRecorder.unregisterListeners();
             }
         }
         if (isWearablePreferenceEnabled()) {
