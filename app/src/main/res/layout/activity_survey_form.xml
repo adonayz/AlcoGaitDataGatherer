@@ -56,7 +56,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="number|none"
-                android:maxLength="4"
+                android:maxLength="3"
                 android:digits="0123456789"
                 android:hint="Subject ID (0 - 9999)"
                 android:imeOptions="actionNext"
@@ -106,6 +106,7 @@
                 android:layout_height="wrap_content"
                 android:hint="Age"
                 android:inputType="number|none"
+                android:maxLength="2"
                 android:imeOptions="actionNext"
                 android:nextFocusDown="@+id/weightInput" />
 
@@ -120,6 +121,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="numberDecimal"
+                android:maxLength="6"
                 android:hint="Pounds (lbs)"
                 android:imeOptions="actionNext"
                 android:nextFocusDown="@+id/heightFeetInput"/>

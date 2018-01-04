@@ -18,6 +18,7 @@ import java.util.Locale;
 public class SurveyFormActivity extends AppCompatActivity{
 
     private boolean isIDUnavailable;
+    private boolean allowSubmission = false;
     private EditText subjectIDInput;
     private RadioButton maleRadioButton;
     private RadioButton femaleRadioButton;
@@ -59,10 +60,83 @@ public class SurveyFormActivity extends AppCompatActivity{
 
             @Override
             public void afterTextChanged(Editable editable) {
-                if (isIDUnavailable = SurveyListAdapter.getSavedIDs().contains(editable.toString().trim().replaceFirst("^0+(?!$)", ""))) {
-                    subjectIDInput.setError("This ID already exists. Please enter a valid ID.");
-                }else{
-                    subjectIDInput.setError(null);
+                if (!editable.toString().trim().isEmpty()) {
+                    if (isIDUnavailable = SurveyListAdapter.getSavedIDs().contains(editable.toString().trim().replaceFirst("^0+(?!$)", ""))) {
+                        subjectIDInput.setError("This ID already exists. Please enter a valid ID.");
+                    } else if (Integer.parseInt(editable.toString().trim()) < 101 || Integer.parseInt(editable.toString().trim()) > 996) {
+                        subjectIDInput.setError("Subject ID has to be between 101 and 996");
+                    } else {
+                        subjectIDInput.setError(null);
+                    }
+                }
+            }
+        });
+
+        ageInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (!editable.toString().trim().isEmpty()) {
+                    if (Integer.parseInt(editable.toString().trim()) < 21 || Integer.parseInt(editable.toString().trim()) > 65) {
+                        ageInput.setError("Invalid. 21 Minimum. 65 Maximum.");
+                    } else {
+                        ageInput.setError(null);
+                    }
+                }
+            }
+        });
+
+        weightInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (!editable.toString().trim().isEmpty()) {
+                    if (Double.parseDouble(editable.toString().trim()) < 85 || Double.parseDouble(editable.toString().trim()) > 230) {
+                        weightInput.setError("Invalid. 85 Minimum. 230 Maximum.");
+                    } else {
+                        weightInput.setError(null);
+                    }
+                }
+            }
+        });
+
+        heightFeetInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (!editable.toString().trim().isEmpty()) {
+                    if (Integer.parseInt(editable.toString().trim()) < 4 || Integer.parseInt(editable.toString().trim()) > 7) {
+                        heightFeetInput.setError("Invalid. 4 Feet Minimum. 7 Feet Maximum.");
+                    } else {
+                        heightFeetInput.setError(null);
+                    }
                 }
             }
         });
@@ -96,12 +170,6 @@ public class SurveyFormActivity extends AppCompatActivity{
         submitButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String subjectID = String.format(Locale.US, "%04d", Integer.parseInt(subjectIDInput.getText().toString().trim())).trim();
-                String age = ageInput.getText().toString().trim();
-                String weight = weightInput.getText().toString().trim();
-                String heightFeet = heightFeetInput.getText().toString().trim();
-                String heightInches = heightInchesInput.getText().toString().trim();
-
                 EditText[] editTexts = {subjectIDInput, ageInput, weightInput, heightFeetInput, heightInchesInput};
                 for(EditText anEditText: editTexts){
                     if(anEditText.getText().toString().trim().isEmpty()){
@@ -109,8 +177,13 @@ public class SurveyFormActivity extends AppCompatActivity{
                     }
                 }
 
-                if(!subjectID.isEmpty() && !age.isEmpty() && !weight.isEmpty() && !heightFeet.isEmpty() &&
-                        !heightInches.isEmpty() && (maleRadioButton.isChecked() || femaleRadioButton.isChecked()) && !isIDUnavailable){
+                if (subjectIDInput.getError() == null && ageInput.getError() == null && weightInput.getError() == null && heightFeetInput.getError() == null
+                        && heightInchesInput.getError() == null && (maleRadioButton.isChecked() || femaleRadioButton.isChecked())) {
+                    String subjectID = String.format(Locale.US, "%03d", Integer.parseInt(subjectIDInput.getText().toString().trim())).trim();
+                    String age = ageInput.getText().toString().trim();
+                    String weight = weightInput.getText().toString().trim();
+                    String heightFeet = heightFeetInput.getText().toString().trim();
+                    String heightInches = heightInchesInput.getText().toString().trim();
 
                     TestSubject testSubject;
                     Gender gender;
@@ -161,7 +234,7 @@ public class SurveyFormActivity extends AppCompatActivity{
             // Respond to the action bar's Up/Home button
             case android.R.id.home:
                 onBackPressed();
-                this.finish();
+                finish();
                 return true;
         }
         return super.onOptionsItemSelected(item);

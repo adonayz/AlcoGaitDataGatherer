@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:keepScreenOn="true"
     tools:context="edu.wpi.alcogaitdatagatherer.DataGatheringActivity">
 
     <android.support.design.widget.AppBarLayout
@@ -111,7 +112,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="20sp"
-                android:text="STOP"
+                android:text="STOP WALK"
                 android:visibility="gone" />
 
             <TextView
@@ -155,7 +156,7 @@
                 style="@style/AppCompatBarStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="RE-DO PREV WALK"
+                android:text="RE-DO WALK"
                 android:layout_centerHorizontal="true"
                 android:clickable="false"
                 />
@@ -165,7 +166,7 @@
                 style="@style/AppCompatBarStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="FINISH"
+                android:text="P COMPLETE"
                 android:layout_alignParentEnd="true"
                 android:clickable="false"
                 />

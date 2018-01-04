@@ -5,20 +5,26 @@ package edu.wpi.alcogaitdatagatherercommon;
  */
 
 public enum WalkType {
-    NORMAL("NORMAL WALK"),
-    HEEL_TO_TOE("HEEL TO TOE"),
-    STANDING_ON_ONE_FOOT("STANDING ON ONE FOOT"),
-    NYSTAGMUS("NYSTAGMUS");
+    NORMAL("NORMAL WALK", "NORMAL_WALK"),
+    HEEL_TO_TOE("HEEL TO TOE", "HEEL_TO_TOE"),
+    STANDING_ON_ONE_FOOT("STANDING ON ONE FOOT", "STANDING_ON_ONE_FOOT"),
+    NYSTAGMUS("NYSTAGMUS", "NYSTAGMUS");
 
     String walkTypeString;
+    String walkTypeStringNoSpace;
 
-    WalkType(String walkTypeString) {
+    WalkType(String walkTypeString, String walkTypeStringNoSpace) {
         this.walkTypeString = walkTypeString;
+        this.walkTypeStringNoSpace = walkTypeStringNoSpace;
     }
 
     @Override
     public String toString() {
         return walkTypeString;
+    }
+
+    public String toNoSpaceString() {
+        return walkTypeStringNoSpace;
     }
 
     public WalkType next(WalkType prevWalkType) {

@@ -30,7 +30,7 @@ public class SaveWalkHolderToCSVTask extends AsyncTask<Void, Integer, Boolean> {
         this.sensorRecorder = sensorRecorder;
         this.mFolderName = mFolderName;
         this.testSubject = sensorRecorder.getTestSubject();
-        dialog = new ProgressDialog(bacInput.getContext());
+        this.dialog = new ProgressDialog(bacInput.getContext());
         this.bacInput = bacInput;
     }
 
@@ -42,26 +42,27 @@ public class SaveWalkHolderToCSVTask extends AsyncTask<Void, Integer, Boolean> {
         dialog.setTitle("Writing data to " + mFolderName);
         dialog.setIndeterminate(false);
         dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        dialog.setProgress(savedSamples);
-        int max = testSubject.getCurrentWalkHolder().getSampleSize();
-        dialog.setMax(max);
+        dialog.setProgress(0);
+        dialog.setMax(100);
         dialog.show();
     }
 
     @Override
     protected Boolean doInBackground(Void... voids) {
-        String fileName = mFolderName + File.separator + "walk_" + testSubject.getCurrentWalkHolder().getWalkNumber() + ".csv";
+        String fileName = mFolderName + File.separator + "phone.csv";
         File f = new File(fileName);
         try {
             CSVWriter writer;
+            FileWriter mFileWriter;
             if (f.exists() && !f.isDirectory()) {
-                writer = new CSVWriter(new FileWriter(fileName));
+                mFileWriter = new FileWriter(fileName, false);
             } else {
-                FileWriter mFileWriter = new FileWriter(fileName, true);
-                writer = new CSVWriter(mFileWriter);
+                mFileWriter = new FileWriter(fileName);
             }
 
-            String testSubjectTitle[] = {"Subject ID", "Gender", "Age", "Weight", "Height(in feet and inches)"};
+            writer = new CSVWriter(mFileWriter);
+
+            String testSubjectTitle[] = {"Subject ID", "Gender", "Age", "Weight", "Height(feet and inches)"};
 
             String testSubjectInformation[] = {testSubject.getSubjectID(), testSubject.getGender().toString(),
                     String.valueOf(testSubject.getAge()), String.valueOf(testSubject.getWeight()) + " lbs",
@@ -71,13 +72,18 @@ public class SaveWalkHolderToCSVTask extends AsyncTask<Void, Integer, Boolean> {
             writer.writeNext(testSubjectInformation);
             writer.writeNext(space);
 
+            int percentProgress = 0;
+            int max = testSubject.getCurrentWalkHolder().getSampleSize();
             for (WalkType walkType : WalkType.values()) {
                 if (testSubject.getCurrentWalkHolder().hasWalk(walkType)) {
                     writer.writeNext(new String[]{walkType.toString()});
                     writer.writeNext(space);
                     for (String[] data : testSubject.getCurrentWalkHolder().get(walkType).toCSVFormat()) {
                         writer.writeNext(data);
-                        publishProgress(++savedSamples);
+                        if ((++savedSamples / max) * 100 > percentProgress) {
+                            publishProgress((savedSamples / max) * 100);
+                        }
+                        percentProgress = (savedSamples / max) * 100;
                     }
 
                     writer.writeNext(space);

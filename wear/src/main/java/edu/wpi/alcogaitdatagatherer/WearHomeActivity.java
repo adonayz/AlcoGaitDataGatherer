@@ -9,6 +9,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -17,23 +18,25 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.wearable.activity.WearableActivity;
-import android.util.Log;
 import android.view.View;
 import android.view.animation.AlphaAnimation;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.android.gms.wearable.CapabilityClient;
 import com.google.android.gms.wearable.CapabilityInfo;
+import com.google.android.gms.wearable.ChannelClient;
 import com.google.android.gms.wearable.MessageClient;
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Node;
-import com.google.android.gms.wearable.PutDataMapRequest;
-import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -42,6 +45,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import edu.wpi.alcogaitdatagatherercommon.CommonCode;
+import edu.wpi.alcogaitdatagatherercommon.WalkType;
 
 public class WearHomeActivity extends WearableActivity implements MessageClient.OnMessageReceivedListener, CapabilityClient.OnCapabilityChangedListener, SensorEventListener {
 
@@ -59,13 +63,18 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
     private Sensor mAccelerometer;
     private Sensor mGyroscope;
 
-    private String currentWalkType;
     private int recordedSamples = 0; // for debugging purposes
     private int noti_counter = 0; // count how many times the watch had to send a finished request to phone till it responds
     private boolean isRecording = false;
     private ExecutorService executorService;
     private static final int BODY_SENSOR_PERMISSION_CODE = 1010;
     private static final int TIMEOUT = 15000;
+    private WalkType currentWalkType;
+
+    private LiteWalk normalWalk;
+    private LiteWalk heelToToeWalk;
+    private LiteWalk oneFootWalk;
+    private LiteWalk nystagmusWalk;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +88,8 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
 
         setupTimer();
 
+        initWalks();
+
         recordedSamples = 0;
     }
 
@@ -87,6 +98,13 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
         countdownTextView = findViewById(R.id.countdown);
         progressBarHolder = findViewById(R.id.progressBarHolder);
         wearConnectProgressUpdateTextView = findViewById(R.id.wearConnectProgressUpdateTextView);
+    }
+
+    private void initWalks() {
+        normalWalk = new LiteWalk(WalkType.NORMAL);
+        heelToToeWalk = new LiteWalk(WalkType.HEEL_TO_TOE);
+        oneFootWalk = new LiteWalk(WalkType.STANDING_ON_ONE_FOOT);
+        nystagmusWalk = new LiteWalk(WalkType.NYSTAGMUS);
     }
 
     @Override
@@ -155,8 +173,10 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         if (isRecording) {
-            //CommonCode.generatePrintableSensorData(sensorEvent.sensor.getName(),sensorEvent.values, sensorEvent.accuracy, sensorEvent.timestamp);
-            sendSensorData(sensorEvent.sensor.getType(), sensorEvent.sensor.getName(), sensorEvent.values, sensorEvent.accuracy, sensorEvent.timestamp);
+            storeSensorData(sensorEvent.sensor.getType(), CommonCode.generatePrintableSensorData(sensorEvent.sensor.getName(), sensorEvent.values, sensorEvent.accuracy, sensorEvent.timestamp));
+            recordedSamples++;
+            //walkHolderLite.addSensorData(currentWalkType, generatePrintableSensorData(sensorEvent.sensor.getName(),sensorEvent.values, sensorEvent.accuracy, sensorEvent.timestamp, sensorEvent.sensor.getType()));
+            //sendSensorData(sensorEvent.sensor.getType(), sensorEvent.sensor.getName(), sensorEvent.values, sensorEvent.accuracy, sensorEvent.timestamp);
         }
     }
 
@@ -164,7 +184,26 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
     public void onAccuracyChanged(Sensor sensor, int i) {
     }
 
-    public void sendSensorData(final int sensorType, final String sensorName, final float[] values, final int accuracy, final long timestamp) {
+    private void storeSensorData(int sensorType, String[] sensorData) {
+        getWalk(currentWalkType).addSensorData(sensorType, sensorData);
+    }
+
+    private LiteWalk getWalk(WalkType walkType) {
+        switch (walkType) {
+            case NORMAL:
+                return normalWalk;
+            case HEEL_TO_TOE:
+                return heelToToeWalk;
+            case STANDING_ON_ONE_FOOT:
+                return oneFootWalk;
+            case NYSTAGMUS:
+                return nystagmusWalk;
+            default:
+                return normalWalk;
+        }
+    }
+
+    /*public void sendSensorData(final int sensorType, final String sensorName, final float[] values, final int accuracy, final long timestamp) {
         Thread sendingThread = new Thread(() -> {
             PutDataMapRequest dataMap = PutDataMapRequest.create(CommonCode.SENSOR_PATH + String.valueOf(sensorType));
 
@@ -172,7 +211,7 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
             dataMap.getDataMap().putFloatArray(CommonCode.VALUES, values);
             dataMap.getDataMap().putInt(CommonCode.ACCURACY, accuracy);
             dataMap.getDataMap().putLong(CommonCode.TIMESTAMP, timestamp);
-            dataMap.getDataMap().putString(CommonCode.WALK_TYPE_INFO, currentWalkType);
+            //dataMap.getDataMap().putString(CommonCode.WALK_TYPE_INFO, currentWalkType);
 
             PutDataRequest putDataRequest = dataMap.asPutDataRequest();
 
@@ -188,12 +227,22 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
         });
 
         executorService.submit(sendingThread);
+    }*/
+
+    private void setCurrentWalkType(String walkTypeStringNoSpace) {
+        for (WalkType walkType : WalkType.values()) {
+            if (walkTypeStringNoSpace.equals(walkType.toNoSpaceString())) {
+                currentWalkType = walkType;
+                return;
+            }
+        }
     }
 
-    private void startRecording(String walkType) {
+    private void startRecording(String walkTypeStringNoSpace) {
         if(!isRecording){
+            setCurrentWalkType(walkTypeStringNoSpace);
+            getWalk(currentWalkType).resetWalk();
             isRecording = true;
-            currentWalkType = walkType;
             recordedSamples = 0;
             executorService = Executors.newSingleThreadExecutor();
             registerSensorListeners();
@@ -206,9 +255,8 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
     private void stopRecording(){
         if(isRecording) {
             isRecording = false;
-            startProgressBar();
-            wearConnectProgressUpdateTextView.setText("Samples sent " + String.valueOf(recordedSamples));
-            sendSensorData(12456345, CommonCode.TRANSFER_FINISHED_STRING, new float[1], noti_counter++, CommonCode.TRANSFER_FINISHED_LONG);
+            //startProgressBar();
+            //sendSensorData(12456345, CommonCode.TRANSFER_FINISHED_STRING, new float[1], noti_counter++, CommonCode.TRANSFER_FINISHED_LONG);
             notifyPhone(CommonCode.STOP_RECORDING_PATH, String.valueOf(recordedSamples));
             unregisterSensorListeners();
             instructionTextView.setText(R.string.use_phone_instruction);
@@ -234,14 +282,32 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
         };
     }
 
+    private File getSaveFile() {
+        File mediaStorageDir = new File(this.getExternalFilesDir(null)
+                + "/Android/data/"
+                + getApplicationContext().getPackageName()
+                + "/Files");
+
+        if (!mediaStorageDir.exists()) {
+            if (!mediaStorageDir.mkdirs()) {
+                showToast("FILE SAVE ERROR");
+                return null;
+            }
+        }
+
+        File saveFile;
+        String fileName = "walk_data.csv";
+        saveFile = new File(mediaStorageDir.getPath() + File.separator + fileName);
+        return saveFile;
+    }
+
     @Override
     public void onMessageReceived(final MessageEvent messageEvent) {
         runOnUiThread(() -> {
             if (messageEvent.getPath().equalsIgnoreCase(CommonCode.WEAR_MESSAGE_PATH)) {
                 switch (new String(messageEvent.getData())) {
-                    case CommonCode.REDO_PREVIOUS_WALK:
-                        break;
                     case CommonCode.RESTART:
+                        initWalks();
                         break;
                     case CommonCode.REFRESH_CONNECTION:
                         new CheckPhoneReachability().execute();
@@ -260,11 +326,19 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
                         break;
                     case CommonCode.STOP_RECORDING:
                         stopRecording();
+                        break;
+                    case CommonCode.SAVE_WALKS:
+                        notifyPhone(CommonCode.WEAR_MESSAGE_PATH, CommonCode.SAVE_WALKS_ACK);
+                        new LiteWalkToCSVTask(getSaveFile(), this).execute(normalWalk, heelToToeWalk, oneFootWalk, nystagmusWalk);
+                        break;
                     default:
                         break;
                 }
             } else if (messageEvent.getPath().equalsIgnoreCase(CommonCode.START_RECORDING_PATH)) {
                 startRecording(new String(messageEvent.getData()));
+            } else if (messageEvent.getPath().equalsIgnoreCase(CommonCode.REDO_PREVIOUS_WALK_PATH)) {
+                setCurrentWalkType(new String(messageEvent.getData()));
+                getWalk(currentWalkType).resetWalk();
             }
         });
     }
@@ -283,6 +357,27 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
             for (String nodeID : getNodes()) {
                 Wearable.getMessageClient(WearHomeActivity.this).sendMessage(
                         nodeID, path, text.getBytes());
+            }
+        }).start();
+    }
+
+    public void sendCSVFileToPhone() {
+        new Thread(() -> {
+            for (String nodeID : getNodes()) {
+                Wearable.getChannelClient(WearHomeActivity.this).openChannel(nodeID, CommonCode.WEAR_CSV_FILE_CHANNEL_PATH).addOnSuccessListener(new OnSuccessListener<ChannelClient.Channel>() {
+                    @Override
+                    public void onSuccess(ChannelClient.Channel channel) {
+                        startProgressBar();
+                        Wearable.getChannelClient(WearHomeActivity.this).sendFile(channel, Uri.fromFile(getSaveFile())).addOnCompleteListener(new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+                                showToast("File Sent!");
+                                stopProgressBar();
+                                Wearable.getChannelClient(WearHomeActivity.this).close(channel);
+                            }
+                        });
+                    }
+                });
             }
         }).start();
     }
@@ -323,14 +418,14 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
 
     }
 
-    private void startProgressBar() {
+    public void startProgressBar() {
         inAnimation = new AlphaAnimation(0f, 1f);
         inAnimation.setDuration(200);
         progressBarHolder.setAnimation(inAnimation);
         progressBarHolder.setVisibility(View.VISIBLE);
     }
 
-    private void stopProgressBar() {
+    public void stopProgressBar() {
         outAnimation = new AlphaAnimation(1f, 0f);
         outAnimation.setDuration(200);
         progressBarHolder.setAnimation(outAnimation);
@@ -371,7 +466,7 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
         }
     }
 
-    private void showToast(final String text) {
+    public void showToast(final String text) {
         runOnUiThread(() -> Toast.makeText(WearHomeActivity.this, text, Toast.LENGTH_LONG).show());
     }
 

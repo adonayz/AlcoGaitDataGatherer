@@ -6,13 +6,17 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.google.android.gms.wearable.DataMap;
+import com.google.android.gms.wearable.ChannelClient;
+import com.google.android.gms.wearable.Wearable;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -26,14 +30,13 @@ import edu.wpi.alcogaitdatagatherercommon.WalkType;
 import static android.content.Context.SENSOR_SERVICE;
 import static android.hardware.Sensor.TYPE_ACCELEROMETER;
 import static android.hardware.Sensor.TYPE_GYROSCOPE;
-import static android.hardware.Sensor.TYPE_HEART_RATE;
 import static android.hardware.Sensor.TYPE_MAGNETIC_FIELD;
 
 /**
  * Created by Adonay on 9/11/2017.
  */
 
-public class SensorRecorder extends CommonCode implements SensorEventListener {
+public class SensorRecorder extends ChannelClient.ChannelCallback implements SensorEventListener {
 
     private TestSubject testSubject;
     private Walk walk;
@@ -41,6 +44,7 @@ public class SensorRecorder extends CommonCode implements SensorEventListener {
     private TextView walkNumberDisplay;
     private TextView walkLogDisplay;
     private Button startButton;
+    private DataGatheringActivity activity;
 
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
@@ -52,20 +56,21 @@ public class SensorRecorder extends CommonCode implements SensorEventListener {
     private float[] magVal;
     private LinkedList<Walk> logQueue;
 
-    private String mFolderName = null;
+    private String rootFolderName;
+    private String walkFolderName;
     private boolean isRecording;
     private int currentWalkNumber;
     private WalkType currentWalkType;
     private String TAG = "SensorRecorder";
     private static final float ALPHA = 0.15f;
 
-    SensorRecorder(DataGatheringActivity gatheringActivity, String mFolderName, TestSubject testSubject, TextView walkNumberDisplay, TextView walkLogDisplay, Button startButton) {
+    SensorRecorder(DataGatheringActivity gatheringActivity, String rootFolderName, TestSubject testSubject, TextView walkNumberDisplay, TextView walkLogDisplay, Button startButton) {
         this.testSubject = testSubject;
         this.mSensorManager = (SensorManager) gatheringActivity.getSystemService(SENSOR_SERVICE);
         this.mAccelerometer = mSensorManager.getDefaultSensor(TYPE_ACCELEROMETER);
         this.mGyroscope = mSensorManager.getDefaultSensor(TYPE_GYROSCOPE);
         this.mMagnetometer = mSensorManager.getDefaultSensor(TYPE_MAGNETIC_FIELD);
-        this.mFolderName = mFolderName;
+        this.rootFolderName = rootFolderName;
         isRecording = false;
 
         this.walkNumberDisplay = walkNumberDisplay;
@@ -80,9 +85,9 @@ public class SensorRecorder extends CommonCode implements SensorEventListener {
     }
 
     public void registerListeners() {
-        mSensorManager.registerListener(this, mAccelerometer, DELAY_IN_MILLISECONDS * 1000);
-        mSensorManager.registerListener(this, mGyroscope, DELAY_IN_MILLISECONDS * 1000);
-        mSensorManager.registerListener(this, mMagnetometer, DELAY_IN_MILLISECONDS * 1000);
+        mSensorManager.registerListener(this, mAccelerometer, CommonCode.DELAY_IN_MILLISECONDS * 1000);
+        mSensorManager.registerListener(this, mGyroscope, CommonCode.DELAY_IN_MILLISECONDS * 1000);
+        mSensorManager.registerListener(this, mMagnetometer, CommonCode.DELAY_IN_MILLISECONDS * 1000);
     }
 
     public void unregisterListeners() {
@@ -101,11 +106,11 @@ public class SensorRecorder extends CommonCode implements SensorEventListener {
 
             if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
                 accelVal = lowPass(sensorEvent.values.clone(), accelVal);
-                walk.addPhoneAccelerometerData(generatePrintableSensorData(sensorName, accelVal, sensorEvent.accuracy, sensorEvent.timestamp));
+                walk.addPhoneAccelerometerData(CommonCode.generatePrintableSensorData(sensorName, accelVal, sensorEvent.accuracy, sensorEvent.timestamp));
             }
             if (sensorEvent.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
                 gyroVal = lowPass(sensorEvent.values.clone(), gyroVal);
-                walk.addPhoneGyroscopeData(generatePrintableSensorData(sensorName, gyroVal, sensorEvent.accuracy, sensorEvent.timestamp));
+                walk.addPhoneGyroscopeData(CommonCode.generatePrintableSensorData(sensorName, gyroVal, sensorEvent.accuracy, sensorEvent.timestamp));
             }
             if (sensorEvent.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
                 magVal = lowPass(sensorEvent.values.clone(), magVal);
@@ -117,7 +122,7 @@ public class SensorRecorder extends CommonCode implements SensorEventListener {
                 if (success) {
                     float compassVal[] = new float[3];
                     SensorManager.getOrientation(R, compassVal);
-                    walk.addCompassData(generatePrintableSensorData("Compass", compassVal, sensorEvent.accuracy, sensorEvent.timestamp));
+                    walk.addCompassData(CommonCode.generatePrintableSensorData("Compass", compassVal, sensorEvent.accuracy, sensorEvent.timestamp));
                 }
             }
         }
@@ -150,7 +155,7 @@ public class SensorRecorder extends CommonCode implements SensorEventListener {
             updateWalkNumberDisplay();
             return true;
         } else {
-            startButton.setText("Save Walk");
+            startButton.setText("SAVE WALK #" + String.valueOf(currentWalkNumber));
             return false;
         }
 
@@ -182,29 +187,35 @@ public class SensorRecorder extends CommonCode implements SensorEventListener {
                 .setNegativeButton("No", dialogClickListener).show();*/
     }
 
+    public void prepareWalkStorage() {
+        walkFolderName = rootFolderName + File.separator + "walk_" + String.valueOf(testSubject.getCurrentWalkHolder().getWalkNumber());
+        File f = new File(walkFolderName);
+        f.mkdirs();
+    }
+
     public void saveCurrentWalkNumberToCSV(EditText bacInput) {
-        new SaveWalkHolderToCSVTask(this, mFolderName, bacInput).execute();
+        new SaveWalkHolderToCSVTask(this, walkFolderName, bacInput).execute();
     }
 
     private void updateWalkNumberDisplay() {
         walkNumberDisplay.setText("Walk Number " + (currentWalkNumber) + " : " + currentWalkType.toString());
     }
 
-    void restartCurrentWalkNumber(final EditText bacInput) {
-        DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                switch (which) {
-                    case DialogInterface.BUTTON_POSITIVE:
-                        bacInput.setText("");
-                        bacInput.setEnabled(true);
-                        restartWalkHolder();
-                        break;
+    void restartCurrentWalkNumber(final EditText bacInput, DataGatheringActivity activity) {
+        DialogInterface.OnClickListener dialogClickListener = (dialog, which) -> {
+            switch (which) {
+                case DialogInterface.BUTTON_POSITIVE:
+                    bacInput.setText("");
+                    bacInput.setEnabled(true);
+                    restartWalkHolder();
+                    if (activity.isWearablePreferenceEnabled()) {
+                        activity.notifyWearableActivity(CommonCode.WEAR_MESSAGE_PATH, CommonCode.RESTART);
+                    }
+                    break;
 
-                    case DialogInterface.BUTTON_NEGATIVE:
-                        //No button clicked
-                        break;
-                }
+                case DialogInterface.BUTTON_NEGATIVE:
+                    //No button clicked
+                    break;
             }
         };
         AlertDialog.Builder builder = new AlertDialog.Builder(bacInput.getContext());
@@ -226,31 +237,33 @@ public class SensorRecorder extends CommonCode implements SensorEventListener {
         walkLogDisplay.setVisibility(View.GONE);
     }
 
-    void reDoWalk(final EditText bacInput) {
-        DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                switch (which) {
-                    case DialogInterface.BUTTON_POSITIVE:
-                        testSubject.setCurrentWalkHolder(testSubject.getCurrentWalkHolder().removeWalk(walk.getWalkType()));
-                        bacInput.setText(String.valueOf(walk.getBAC()));
-                        currentWalkType = walk.getWalkType();
-                        updateWalkNumberDisplay();
-                        //update walk log
-                        logQueue.removeLast();
-                        updateWalkLogDisplay(false);
-                        if (currentWalkType != WalkType.NORMAL) {
-                            walk = testSubject.getCurrentWalkHolder().get(testSubject.getCurrentWalkHolder().getPreviousWalkType(currentWalkType));
-                        } else {
-                            bacInput.setEnabled(true);
-                            walk = null;
-                        }
-                        startButton.setText("START WALK");
-                        break;
+    void reDoWalk(final EditText bacInput, DataGatheringActivity activity) {
+        DialogInterface.OnClickListener dialogClickListener = (dialog, which) -> {
+            switch (which) {
+                case DialogInterface.BUTTON_POSITIVE:
+                    testSubject.setCurrentWalkHolder(testSubject.getCurrentWalkHolder().removeWalk(walk.getWalkType()));
+                    bacInput.setText(String.valueOf(walk.getBAC()));
+                    currentWalkType = walk.getWalkType();
+                    updateWalkNumberDisplay();
+                    //update walk log
+                    logQueue.removeLast();
+                    updateWalkLogDisplay(false);
+                    if (currentWalkType != WalkType.NORMAL) {
+                        walk = testSubject.getCurrentWalkHolder().get(testSubject.getCurrentWalkHolder().getPreviousWalkType(currentWalkType));
+                    } else {
+                        bacInput.setEnabled(true);
+                        walk = null;
+                    }
+                    startButton.setText("START WALK");
 
-                    case DialogInterface.BUTTON_NEGATIVE:
-                        break;
-                }
+                    if (activity.isWearablePreferenceEnabled()) {
+                        activity.notifyWearableActivity(CommonCode.REDO_PREVIOUS_WALK_PATH, getCurrentWalkType().toNoSpaceString());
+                    }
+
+                    break;
+
+                case DialogInterface.BUTTON_NEGATIVE:
+                    break;
             }
         };
         AlertDialog.Builder builder = new AlertDialog.Builder(bacInput.getContext());
@@ -288,13 +301,41 @@ public class SensorRecorder extends CommonCode implements SensorEventListener {
         walkLogDisplay.setText("");
     }
 
-    public void addWearableSensorData(int sensorType, DataMap dataMap) {
+    /*public void addWearableSensorData(String walkTypeString, String[] sensorData) {
+        if (isRecording) {
+            for(WalkType walkType: WalkType.values()){
+                if(walkTypeString.equals(walkType.toString())){
+                    walkHolderLite.addSensorData(walkTypeString, sensorData);
+                }
+            }
+        }
+    }*/
+
+    /*public void saveWearableSensorData(){
+        String [] sensorData = ;
+        int sensorType = removeSensorType(sensorData);
+
+        if (sensorType == TYPE_HEART_RATE) {
+            sensorData = generatePrintableSensorData(sensorName, values, accuracy, timestamp);
+            walk.addHeartRateData(sensorData);
+        } else if (sensorType == TYPE_ACCELEROMETER) {
+            sensorData = generatePrintableSensorData(sensorName, values, accuracy, timestamp);
+            walk.addWatchAccelerometerData(sensorData);
+        } else if (sensorType == TYPE_GYROSCOPE) {
+            sensorData = generatePrintableSensorData(sensorName, values, accuracy, timestamp);
+            walk.addWatchGyroscopeData(sensorData);
+        }
+
+        walkHolderLite = new WalkHolderLite();
+    }*/
+
+    /*public void addWearableSensorData(int sensorType, DataMap dataMap) {
         if (isRecording) {
             String[] sensorData;
-            String sensorName = dataMap.getString(SENSOR_NAME);
-            float[] values = dataMap.getFloatArray(VALUES);
-            int accuracy = dataMap.getInt(ACCURACY);
-            long timestamp = dataMap.getLong(TIMESTAMP);
+            String sensorName = dataMap.getString(CommonCode.SENSOR_NAME);
+            float[] values = dataMap.getFloatArray(CommonCode.VALUES);
+            int accuracy = dataMap.getInt(CommonCode.ACCURACY);
+            long timestamp = dataMap.getLong(CommonCode.TIMESTAMP);
 
             if (values.length > 0) {
                 if (sensorType == TYPE_HEART_RATE) {
@@ -309,7 +350,7 @@ public class SensorRecorder extends CommonCode implements SensorEventListener {
                 }
             }
         }
-    }
+    }*/
 
     public boolean isRecording() {
         return isRecording;
@@ -342,7 +383,7 @@ public class SensorRecorder extends CommonCode implements SensorEventListener {
     }
 
     public void saveWalkReport() {
-        final File file = new File(mFolderName, "report.txt");
+        final File file = new File(rootFolderName, "report.txt");
 
         // Save your stream, don't forget to flush() it before closing it.
 
@@ -380,5 +421,40 @@ public class SensorRecorder extends CommonCode implements SensorEventListener {
 
     public WalkType getCurrentWalkType() {
         return currentWalkType;
+    }
+
+    @Override
+    public void onChannelOpened(@NonNull ChannelClient.Channel channel) {
+        if (channel.getPath().equals(CommonCode.WEAR_CSV_FILE_CHANNEL_PATH)) {
+            activity.startProgressBar();
+            activity.updateProgressBarMessage("Receiving Data From Watch");
+
+            File file = new File(walkFolderName + File.separator + "watch.csv");
+
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                //handle error
+            }
+            Wearable.getChannelClient(activity).receiveFile(channel, Uri.fromFile(file), false);
+        }
+    }
+
+    @Override
+    public void onChannelClosed(@NonNull ChannelClient.Channel var1, int var2, int var3) {
+    }
+
+    @Override
+    public void onInputClosed(@NonNull ChannelClient.Channel channel, int i, int i1) {
+        activity.runOnUiThread(new Runnable() {
+            public void run() {
+                Toast.makeText(activity, "File received!", Toast.LENGTH_SHORT).show();
+                activity.stopProgressBar();
+            }
+        });
+    }
+
+    public void setActivity(DataGatheringActivity activity) {
+        this.activity = activity;
     }
 }

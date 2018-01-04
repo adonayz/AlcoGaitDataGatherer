@@ -16,12 +16,17 @@ public class CommonCode {
     public static final String STOP_RECORDING_PATH = "/stop_recording";
     public static final String WEAR_MESSAGE_PATH = "/message";
     public static final String WEAR_HOME_ACTIVITY_PATH = "/start/WearHomeActivity";
+    public static final String REDO_PREVIOUS_WALK_PATH = "/redo_previous_walk";
     public static final String STOP_RECORDING = "stop_recording";
-    public static final String REDO_PREVIOUS_WALK = "redo_previous_walk";
+    public static final String SAVE_WALKS = "save_walks";
+    public static final String SAVE_WALKS_ACK = "save_walks_acknowledgement";
     public static final String RESTART = "restart_survey";
     public static final String CHECK_IF_APP_OPEN = "check_if_app_open";
-    public static final String APP_OPEN_ACK = "ack";
+    public static final String APP_OPEN_ACK = "acknowledgement";
+    public static final String RESTART_ACK = "restart_acknowledgement";
+    public static final String REDO_PREVIOUS_WALK_ACK = "redo_walk_acknowledgement";
     public static final String WEARABLE_DISCONNECTED = "wearable_disconnected";
+    public static final String WEAR_CSV_FILE_CHANNEL_PATH = "/channel_for_wear_csv_file";
     public static final String SENSOR_NAME = "sensor_name";
     public static final String ACCURACY = "accuracy";
     public static final String TIMESTAMP = "timestamp";
@@ -37,16 +42,17 @@ public class CommonCode {
     private static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss.SSS", Locale.US);
 
     public static String[] generatePrintableSensorData(String sensorName, float[] values, int accuracy, long timestamp) {
+        int i = 0;
+
         String[] result = new String[values.length + 3];
-        result[0] = sensorName;
-        int i;
-        for (i = 1; i <= values.length; i++) {
+        result[i++] = sensorName;
+        for (; i <= values.length; i++) {
             result[i] = String.valueOf(values[i - 1]);
         }
 
-        result[i] = String.valueOf(accuracy);
+        result[i++] = String.valueOf(accuracy);
 
-        result[i + 1] = simpleDateFormat.format(new Date(getCurrentTimeFromSensor(timestamp)));
+        result[i] = simpleDateFormat.format(new Date(getCurrentTimeFromSensor(timestamp)));
 
         return result;
     }

@@ -15,10 +15,8 @@ public class Walk implements Serializable {
     private WalkType walkType;
     private LinkedList<String[]> phoneAccelerometerDataList;
     private LinkedList<String[]> phoneGyroscopeDataList;
-    private LinkedList<String[]> watchAccelerometerDataList;
-    private LinkedList<String[]> watchGyroscopeDataList;
-    private LinkedList<String[]> heartRateDataList;
     private LinkedList<String[]> compassDataList;
+    private int watchSampleSize = 0;
 
     public Walk(int walkNumber, double BAC, WalkType walkType) {
         this.walkNumber = walkNumber;
@@ -26,9 +24,6 @@ public class Walk implements Serializable {
         this.walkType = walkType;
         phoneAccelerometerDataList = new LinkedList<>();
         phoneGyroscopeDataList = new LinkedList<>();
-        watchAccelerometerDataList = new LinkedList<>();
-        watchGyroscopeDataList = new LinkedList<>();
-        heartRateDataList = new LinkedList<>();
         compassDataList = new LinkedList<>();
     }
 
@@ -52,37 +47,25 @@ public class Walk implements Serializable {
         this.phoneGyroscopeDataList.add(sensorData);
     }
 
-    public void addWatchAccelerometerData(String[] sensorData) {
-        this.watchAccelerometerDataList.add(sensorData);
-    }
-
-    public void addWatchGyroscopeData(String[] sensorData) {
-        this.watchGyroscopeDataList.add(sensorData);
-    }
-
-    public void addHeartRateData(String[] sensorData) {
-        this.heartRateDataList.add(sensorData);
-    }
-
     public void addCompassData(String[] compassData) {
         this.compassDataList.add(compassData);
     }
 
     public int getSampleSize(){
-        return phoneAccelerometerDataList.size() + phoneGyroscopeDataList.size() + compassDataList.size() + watchAccelerometerDataList.size() + watchGyroscopeDataList.size() + heartRateDataList.size();
+        return phoneAccelerometerDataList.size() + phoneGyroscopeDataList.size() + compassDataList.size() + watchSampleSize;
+    }
+
+    public void addWatchSampleSize(int sampleSize) {
+        this.watchSampleSize = sampleSize;
     }
 
     public LinkedList<String[]> toCSVFormat(){
         final String[] SPACE = {""};
         final String[] PHONE_ACCELEROMETER_TITLE = {"ACCELEROMETER DATA (PHONE)"};
         final String[] PHONE_GYROSCOPE_TITLE = {"GYROSCOPE DATA (PHONE)"};
-        final String[] WATCH_ACCELEROMETER_TITLE = {"ACCELEROMETER DATA (WATCH)"};
-        final String[] WATCH_GYROSCOPE_TITLE = {"GYROSCOPE DATA (WATCH)"};
         final String[] COMPASS_TITLE = {"COMPASS (PHONE)"};
-        final String[] HEART_RATE_TITLE = {"HEART RATE DATA (WATCH)"};
 
         final String[] A_G_TABLE_HEADER = {"Sensor Name", "X", "Y", "Z", "Accuracy", "Timestamp"};
-        final String[] HEART_RATE_TABLE_HEADER = {"Sensor Name", "Rate (BPM)", "Accuracy", "Timestamp"};
         final String[] COMPASS_TABLE_HEADER = {"Derived Data", "Azimuth", "Pitch", "Roll", "Accuracy", "Timestamp"};
 
         LinkedList<String[]> csvFormat = new LinkedList<>();
@@ -102,18 +85,6 @@ public class Walk implements Serializable {
         csvFormat.add(COMPASS_TITLE);
         csvFormat.add(COMPASS_TABLE_HEADER);
         csvFormat.addAll(compassDataList);
-        csvFormat.add(SPACE);
-        csvFormat.add(WATCH_ACCELEROMETER_TITLE);
-        csvFormat.add(A_G_TABLE_HEADER);
-        csvFormat.addAll(watchAccelerometerDataList);
-        csvFormat.add(SPACE);
-        csvFormat.add(WATCH_GYROSCOPE_TITLE);
-        csvFormat.add(A_G_TABLE_HEADER);
-        csvFormat.addAll(watchGyroscopeDataList);
-        csvFormat.add(SPACE);
-        csvFormat.add(HEART_RATE_TITLE);
-        csvFormat.add(HEART_RATE_TABLE_HEADER);
-        csvFormat.addAll(heartRateDataList);
 
         return csvFormat;
     }

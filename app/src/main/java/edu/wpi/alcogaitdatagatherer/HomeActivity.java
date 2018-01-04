@@ -77,6 +77,7 @@ public class HomeActivity extends AppCompatActivity implements BoxAuthentication
             public void onClick(View view) {
                 Intent intent = new Intent(HomeActivity.this, SurveyFormActivity.class);
                 startActivity(intent);
+                finish();
             }
         });
 
@@ -123,7 +124,7 @@ public class HomeActivity extends AppCompatActivity implements BoxAuthentication
         try{
             for(File file: allFilesFromDir){
                 String fileName = file.getName();
-                if (fileName.length() == 7 && file.isDirectory() && fileName.startsWith(FILE_SHOULD_START_WITH)) {
+                if (fileName.length() == 6 && file.isDirectory() && fileName.startsWith(FILE_SHOULD_START_WITH)) {
                     surveyFiles.add(file);
                 }
                 /*if(fileName.length() > 7){
