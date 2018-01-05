@@ -1,6 +1,5 @@
 package edu.wpi.alcogaitdatagatherer;
 
-import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,19 +9,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.box.androidsdk.content.BoxApiFile;
-import com.box.androidsdk.content.BoxConstants;
-import com.box.androidsdk.content.BoxException;
-import com.box.androidsdk.content.listeners.ProgressListener;
-import com.box.androidsdk.content.models.BoxEntity;
-import com.box.androidsdk.content.models.BoxError;
-import com.box.androidsdk.content.models.BoxFile;
-import com.box.androidsdk.content.requests.BoxRequestsFile;
 import com.github.lzyzsd.circleprogress.DonutProgress;
 
 import java.io.File;
-import java.net.HttpURLConnection;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -35,7 +25,6 @@ public class SurveyListAdapter extends BaseAdapter {
 
     private LayoutInflater inflater;
     private static LinkedList<File> files;
-    private BoxApiFile mFileApi;
     private HomeActivity homeActivity;
     private ListView listView;
 
@@ -104,71 +93,13 @@ public class SurveyListAdapter extends BaseAdapter {
     }
 
     public void syncWithBox(BoxApiFile mFileApi){
-        this.mFileApi = mFileApi;
-
         ExecutorService executor = Executors.newFixedThreadPool(5);
         for (int i = 0; i < files.size(); i++) {
             ViewHolder holder = (ViewHolder) getViewByPosition(i).getTag();
             holder.fileUploadProgress.setVisibility(View.VISIBLE);
-            new UploadToBoxTask(this, holder.customSurveyView, files.get(i)).executeOnExecutor(executor);
+            new UploadToBoxTask(holder.customSurveyView, files.get(i), mFileApi).executeOnExecutor(executor);
         }
         executor.shutdown();
-    }
-
-    private class UploadToBoxTask extends AsyncTask<Void, Integer, Void>{
-
-        SurveyListAdapter surveyListAdapter;
-        CustomSurveyView customSurveyView;
-        File uploadFile;
-
-        public UploadToBoxTask(SurveyListAdapter surveyListAdapter, CustomSurveyView customSurveyView, File uploadFile){
-            this.surveyListAdapter = surveyListAdapter;
-            this.customSurveyView = customSurveyView;
-            this.uploadFile = uploadFile;
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            try {
-                final BoxRequestsFile.UploadFile request = mFileApi.getUploadRequest(uploadFile, BoxConstants.ROOT_FOLDER_ID);
-                request.setProgressListener(new ProgressListener() {
-                    @Override
-                    public void onProgressChanged(long numBytes, long totalBytes) {
-                        publishProgress((int) (100 * (numBytes/totalBytes)));
-                    }
-                });
-                final BoxFile uploadFileInfo = request.send();
-                showToast("Uploaded " + uploadFileInfo.getName());
-                //loadRootFolder();
-            } catch (BoxException e) {
-                BoxError error = e.getAsBoxError();
-                if (error != null && error.getStatus() == HttpURLConnection.HTTP_CONFLICT) {
-                    ArrayList<BoxEntity> conflicts = error.getContextInfo().getConflicts();
-                    if (conflicts != null && conflicts.size() == 1 && conflicts.get(0) instanceof BoxFile) {
-                        //uploadNewVersion((BoxFile) conflicts.get(0), position, adapter);
-                        publishProgress(100);
-                        return null;
-                    }
-                }
-                showToast("Upload failed");
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onProgressUpdate(Integer... integers){
-            customSurveyView.onProgressUpdate(integers[0]);
-        }
-
-        @Override
-        protected void onPostExecute(Void param){
-            if(customSurveyView.getDonutProgress().getProgress() == 100){
-                customSurveyView.displayUploadComplete();
-            }else{
-                customSurveyView.displayUploadError();
-            }
-        }
     }
 
     public static LinkedList<String> getSavedIDs() {

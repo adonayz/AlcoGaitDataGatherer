@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.support.v7.widget.AppCompatTextView;
 import android.widget.RadioButton;
+import android.widget.TextView;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -103,9 +104,12 @@ public class TestSubject implements Serializable {
         final Dialog dialog = new Dialog(context);
         dialog.setContentView(R.layout.walk_type_amount_dialog);
         dialog.setCancelable(false);
+        final TextView title = dialog.findViewById(R.id.wtamt_title);
         final RadioButton rd2 = dialog.findViewById(R.id.rd_2);
         final RadioButton rd4 = dialog.findViewById(R.id.rd_4);
         final AppCompatTextView okButton = dialog.findViewById(R.id.okButton);
+
+        title.setText("Select Amount Of Walk Types To Record For Walk #" + getCurrentWalkHolder().getWalkNumber());
 
         okButton.setOnClickListener(view -> {
             if (rd2.isChecked()) {
@@ -136,6 +140,13 @@ public class TestSubject implements Serializable {
 
     public void addSamplesSize(int walkNumber, int sampleSize) {
         sampleSizeMap.put(walkNumber, sampleSize);
+    }
+
+    public String printInfo() {
+        return "Subject ID: " + subjectID + "\nGender: " + gender.toString()
+                + "\nAge: " + String.valueOf(age) + "\nWeight: " + String.valueOf(weight)
+                + "\nHeight(ft and inches): " + String.valueOf(heightFeet) + "' "
+                + String.valueOf(heightInches) + "''\n";
     }
 
     // HUGE DESIGN (DATA STRUCTURE) CHANGES TO DECREASE MEMORY USAGE

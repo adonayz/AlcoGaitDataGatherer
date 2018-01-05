@@ -118,7 +118,7 @@
             <TextView
                 android:id="@+id/walkLogDisplay"
                 android:layout_width="wrap_content"
-                android:layout_height="100sp"
+                android:layout_height="180sp"
                 android:layout_marginStart="@dimen/margin_left"
                 android:layout_marginEnd="@dimen/margin_right"
                 android:layout_marginTop="20sp"

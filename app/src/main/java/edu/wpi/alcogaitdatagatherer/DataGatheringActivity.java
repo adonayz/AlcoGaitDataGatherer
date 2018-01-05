@@ -44,6 +44,7 @@ import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.Wearable;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -209,9 +210,9 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
     private void prepareStoragePath() {
         String baseDir = android.os.Environment.getExternalStorageDirectory().getAbsolutePath() + "/AlcoGaitDataGatherer/";
         String folderName = "ID_" + testSubject.getSubjectID().trim();
-        mFolderName = baseDir + folderName + "/";
-        /*File surveyStorageDirectory = new File(mFolderName);
-        surveyStorageDirectory.mkdirs();*/
+        mFolderName = baseDir + folderName;
+        File surveyStorageDirectory = new File(mFolderName);
+        surveyStorageDirectory.mkdirs();
     }
 
     private void setupTimer(){

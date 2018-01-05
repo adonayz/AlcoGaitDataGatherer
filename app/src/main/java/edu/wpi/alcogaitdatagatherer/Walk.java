@@ -70,7 +70,7 @@ public class Walk implements Serializable {
 
         LinkedList<String[]> csvFormat = new LinkedList<>();
 
-        String[] walkInformation = {"Walk Number " + walkNumber, "BAC = " + BAC};
+        String[] walkInformation = {"BAC = " + BAC};
 
         csvFormat.add(walkInformation);
         csvFormat.add(SPACE);

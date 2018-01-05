@@ -24,33 +24,31 @@
 
     <include layout="@layout/content_home" />
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:layout_gravity="bottom|end"
         android:layout_margin="@dimen/ab_margin">
-        <LinearLayout
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/aab"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
-            <android.support.design.widget.FloatingActionButton
-                android:id="@+id/aab"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:srcCompat="@drawable/ic_add_item"
-                android:foregroundTint="@color/colorPrimaryDark"
-                app:backgroundTint="@color/colorPrimary" />
+            app:srcCompat="@drawable/ic_add_item"
+            android:layout_marginBottom="15sp"
+            android:foregroundTint="@color/colorPrimaryDark"
+            app:backgroundTint="@color/colorPrimary" />
 
 
-            <android.support.design.widget.FloatingActionButton
-                android:id="@+id/uab"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:srcCompat="@drawable/ic_cloud_upload"
-                android:layout_marginTop="15dp"
-                android:foregroundTint="@color/colorPrimaryDark"
-                app:backgroundTint="@color/colorPrimary" />
-        </LinearLayout>
-    </RelativeLayout>
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/uab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:srcCompat="@drawable/ic_cloud_upload"
+            android:layout_marginBottom="10sp"
+            android:foregroundTint="@color/colorPrimaryDark"
+            app:backgroundTint="@color/colorPrimary" />
+    </LinearLayout>
 
 </android.support.design.widget.CoordinatorLayout>

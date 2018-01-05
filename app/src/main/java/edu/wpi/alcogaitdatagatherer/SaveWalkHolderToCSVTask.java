@@ -62,7 +62,7 @@ public class SaveWalkHolderToCSVTask extends AsyncTask<Void, Integer, Boolean> {
 
             writer = new CSVWriter(mFileWriter);
 
-            String testSubjectTitle[] = {"Subject ID", "Gender", "Age", "Weight", "Height(feet and inches)"};
+            /*String testSubjectTitle[] = {"Subject ID", "Gender", "Age", "Weight", "Height(ft and inches)"};
 
             String testSubjectInformation[] = {testSubject.getSubjectID(), testSubject.getGender().toString(),
                     String.valueOf(testSubject.getAge()), String.valueOf(testSubject.getWeight()) + " lbs",
@@ -70,7 +70,7 @@ public class SaveWalkHolderToCSVTask extends AsyncTask<Void, Integer, Boolean> {
 
             writer.writeNext(testSubjectTitle);
             writer.writeNext(testSubjectInformation);
-            writer.writeNext(space);
+            writer.writeNext(space);*/
 
             int percentProgress = 0;
             int max = testSubject.getCurrentWalkHolder().getSampleSize();
@@ -81,9 +81,9 @@ public class SaveWalkHolderToCSVTask extends AsyncTask<Void, Integer, Boolean> {
                     for (String[] data : testSubject.getCurrentWalkHolder().get(walkType).toCSVFormat()) {
                         writer.writeNext(data);
                         if ((++savedSamples / max) * 100 > percentProgress) {
-                            publishProgress((savedSamples / max) * 100);
+                            percentProgress = (savedSamples / max) * 100;
+                            publishProgress(percentProgress);
                         }
-                        percentProgress = (savedSamples / max) * 100;
                     }
 
                     writer.writeNext(space);

@@ -18,10 +18,10 @@ import android.widget.Toast;
 import com.google.android.gms.wearable.ChannelClient;
 import com.google.android.gms.wearable.Wearable;
 
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.LinkedList;
 
 import edu.wpi.alcogaitdatagatherercommon.CommonCode;
@@ -82,6 +82,7 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
         updateWalkNumberDisplay();
         testSubject.setCurrentWalkHolder(new WalkHolder(currentWalkNumber));
         testSubject.setWalkTypeAmount(walkNumberDisplay.getContext());
+        prepareReportFile();
     }
 
     public void registerListeners() {
@@ -242,6 +243,9 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
             switch (which) {
                 case DialogInterface.BUTTON_POSITIVE:
                     testSubject.setCurrentWalkHolder(testSubject.getCurrentWalkHolder().removeWalk(walk.getWalkType()));
+                    if (!testSubject.getCurrentWalkHolder().hasWalk(WalkType.NORMAL)) {
+                        testSubject.setWalkTypeAmount(activity);
+                    }
                     bacInput.setText(String.valueOf(walk.getBAC()));
                     currentWalkType = walk.getWalkType();
                     updateWalkNumberDisplay();
@@ -382,38 +386,59 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
         startButton.setText("START WALK");
     }
 
+    public void prepareReportFile() {
+        final File file = new File(rootFolderName, "report.txt");
+
+        try {
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+            FileWriter fileWriter = new FileWriter(file, false);
+            BufferedWriter bufferWriter = new BufferedWriter(fileWriter);
+
+            bufferWriter.append(testSubject.printInfo());
+
+            bufferWriter.close();
+
+            fileWriter.flush();
+            fileWriter.close();
+        } catch (IOException e) {
+            Log.e("Exception", "File write failed: " + e.toString());
+        }
+    }
+
     public void saveWalkReport() {
         final File file = new File(rootFolderName, "report.txt");
 
-        // Save your stream, don't forget to flush() it before closing it.
-
         try {
-            file.createNewFile();
-            FileOutputStream fOut = new FileOutputStream(file);
-            OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+            FileWriter fileWriter = new FileWriter(file, true);
+            BufferedWriter bufferWriter = new BufferedWriter(fileWriter);
 
-            myOutWriter.append("Reported Walk Numbers:\n");
+            bufferWriter.append("\n\nReported Walk Numbers:\n");
             boolean hasReportedWalks = false;
             for (int i = 0; i < testSubject.getBooleanWalksList().size(); i++) {
                 if (testSubject.getBooleanWalksList().get(i)) {
-                    myOutWriter.append(String.valueOf(i + 1));
+                    bufferWriter.append(String.valueOf(i + 1));
                     if (i != testSubject.getBooleanWalksList().size() - 1 && testSubject.getBooleanWalksList().size() > 1) {
-                        myOutWriter.append(", ");
+                        bufferWriter.append(", ");
                     }
                     hasReportedWalks = true;
                 }
             }
             if (!hasReportedWalks) {
-                myOutWriter.append("None");
+                bufferWriter.append("None");
             }
 
-            myOutWriter.append("\n\nReport Message:\n");
-            myOutWriter.append(testSubject.getReportMessage() + "\n");
+            bufferWriter.append("\n\nReport Message:\n");
+            bufferWriter.append(testSubject.getReportMessage() + "\n");
 
-            myOutWriter.close();
+            bufferWriter.close();
 
-            fOut.flush();
-            fOut.close();
+            fileWriter.flush();
+            fileWriter.close();
         } catch (IOException e) {
             Log.e("Exception", "File write failed: " + e.toString());
         }
