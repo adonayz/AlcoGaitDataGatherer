@@ -41,12 +41,10 @@
         <activity
             android:name=".HomeActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme"
-            android:launchMode="singleInstance" />
+            android:theme="@style/AppTheme" />
         <activity
             android:name=".SurveyFormActivity"
-            android:parentActivityName=".HomeActivity"
-            android:launchMode="singleInstance">
+            android:parentActivityName=".HomeActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".HomeActivity" />

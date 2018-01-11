@@ -103,13 +103,16 @@ public class SurveyFormActivity extends AppCompatActivity{
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
             }
 
             @Override
             public void afterTextChanged(Editable editable) {
-                if (!editable.toString().trim().isEmpty()) {
-                    if (Double.parseDouble(editable.toString().trim()) < 85 || Double.parseDouble(editable.toString().trim()) > 230) {
+                String weightString = editable.toString().trim();
+                if (!weightString.isEmpty()) {
+                    if (weightString.startsWith(".")) {
+                        weightString = "0" + weightString;
+                    }
+                    if (Double.parseDouble(weightString) < 85 || Double.parseDouble(weightString) > 230) {
                         weightInput.setError("Invalid. 85 Minimum. 230 Maximum.");
                     } else {
                         weightInput.setError(null);
@@ -182,6 +185,9 @@ public class SurveyFormActivity extends AppCompatActivity{
                     String subjectID = String.format(Locale.US, "%03d", Integer.parseInt(subjectIDInput.getText().toString().trim())).trim();
                     String age = ageInput.getText().toString().trim();
                     String weight = weightInput.getText().toString().trim();
+                    if (weight.startsWith(".")) {
+                        weight = "0" + weight;
+                    }
                     String heightFeet = heightFeetInput.getText().toString().trim();
                     String heightInches = heightInchesInput.getText().toString().trim();
 
@@ -199,7 +205,6 @@ public class SurveyFormActivity extends AppCompatActivity{
                     Intent intent = new Intent(SurveyFormActivity.this, DataGatheringActivity.class);
                     intent.putExtra("test_subject", testSubject);
                     startActivity(intent);
-                    finish();
                 }
             }
         });

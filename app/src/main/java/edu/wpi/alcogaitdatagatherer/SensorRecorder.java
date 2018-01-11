@@ -291,10 +291,16 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
         }
 
         String walkLog;
-        walkLog = "Walk Log (Last " + MAX_LOGS + " Walks):";
+        walkLog = "Last " + MAX_LOGS + " Walks:";
         for (int i = logQueue.size() - 1; i >= 0; i--) {
             Walk aWalk = logQueue.get(i);
-            walkLog += "\nBAC " + aWalk.getBAC() + " was recorded for Walk Number " + aWalk.getWalkNumber() + " : " + aWalk.getWalkType().toString();
+            String walkTypeString;
+            if (aWalk.getWalkType() == WalkType.STANDING_ON_ONE_FOOT) {
+                walkTypeString = "Stand 1 Foot";
+            } else {
+                walkTypeString = aWalk.getWalkType().toString();
+            }
+            walkLog += "\nWalk Number " + aWalk.getWalkNumber() + " : BAC =" + aWalk.getBAC() + ", " + walkTypeString;
         }
 
         walkLogDisplay.setText(walkLog);

@@ -322,7 +322,7 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
                         break;
                     case CommonCode.APP_OPEN_ACK:
                         stopProgressBar();
-                        showToast("ACK_CONFIRMED");
+                        showToast("CONNECTION CONFIRMED");
                         break;
                     case CommonCode.STOP_RECORDING:
                         stopRecording();

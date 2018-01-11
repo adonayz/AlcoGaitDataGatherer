@@ -24,6 +24,8 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatTextView;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.text.method.ScrollingMovementMethod;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -131,14 +133,43 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
         bottomBarLayout = findViewById(R.id.bottomBar);
         wearConnectProgressUpdateTextView = findViewById(R.id.wearConnectProgressUpdateTextView);
         disableBar(true);
+
+        bacInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                String bacString = editable.toString().trim();
+                if (!bacString.isEmpty()) {
+                    if (bacString.startsWith(".")) {
+                        bacString = "0" + bacString;
+                    }
+                    if (Double.parseDouble(bacString) > 5.0) {
+                        bacInput.setError("Invalid. 5.0 Maximum");
+                    } else {
+                        bacInput.setError(null);
+                    }
+                }
+            }
+        });
     }
 
     private void configureButtons(){
         startButton.setOnClickListener(v -> {
             allowBACInput = sensorRecorder.getCurrentWalkType() == WalkType.NORMAL;
-            if ((bacInput.getText().toString().trim().isEmpty()) && allowBACInput) {
+            if ((bacInput.getText().toString().trim().isEmpty())) {
                 bacInput.setError("Please enter BAC data.");
-            } else {
+            }
+
+            if (bacInput.getError() == null) {
                 startRecording(bacInput.getText().toString().trim());
             }
         });
@@ -248,6 +279,9 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
                     notifyWearableActivity(CommonCode.WEAR_MESSAGE_PATH, CommonCode.SAVE_WALKS);
                 }
             } else {
+                if (bacInputText.startsWith(".")) {
+                    bacInputText = "0" + bacInputText;
+                }
                 Double BAC = Double.valueOf(bacInputText);
                 bacInput.setText(String.valueOf(BAC));
                 samplesReceivedFromWatch = 0;
@@ -427,7 +461,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
                         break;
                     case CommonCode.APP_OPEN_ACK:
                         stopProgressBar();
-                        showToast("ACK_CONFIRMED");
+                        showToast("CONNECTION CONFIRMED");
                         break;
                     default:
                         break;
@@ -589,7 +623,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
             }
         };
         AlertDialog.Builder builder = new AlertDialog.Builder(DataGatheringActivity.this);
-        builder.setTitle("Return To Form?");
+        builder.setTitle("Return To Subject Information Form?");
         builder.setMessage("Are you sure you want to return to the form? Data for the latest walk number will be lost (#"
                 + sensorRecorder.getTestSubject().getCurrentWalkHolder().getWalkNumber() + ")").setPositiveButton("Yes", dialogClickListener)
                 .setNegativeButton("No", dialogClickListener).show();
