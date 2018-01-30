@@ -1,4 +1,4 @@
-package edu.wpi.alcogaitdatagatherer;
+package edu.wpi.alcogaitdatagatherer.tasks;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -11,6 +11,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import edu.wpi.alcogaitdatagatherer.models.SensorRecorder;
+import edu.wpi.alcogaitdatagatherer.models.TestSubject;
 import edu.wpi.alcogaitdatagatherercommon.WalkType;
 
 /**
@@ -26,7 +28,7 @@ public class SaveWalkHolderToCSVTask extends AsyncTask<Void, Integer, Boolean> {
     private SensorRecorder sensorRecorder;
     private EditText bacInput;
 
-    SaveWalkHolderToCSVTask(SensorRecorder sensorRecorder, String mFolderName, EditText bacInput) {
+    public SaveWalkHolderToCSVTask(SensorRecorder sensorRecorder, String mFolderName, EditText bacInput) {
         this.sensorRecorder = sensorRecorder;
         this.mFolderName = mFolderName;
         this.testSubject = sensorRecorder.getTestSubject();

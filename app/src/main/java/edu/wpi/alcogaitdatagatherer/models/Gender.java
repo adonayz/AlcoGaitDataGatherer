@@ -1,4 +1,4 @@
-package edu.wpi.alcogaitdatagatherer;
+package edu.wpi.alcogaitdatagatherer.models;
 
 /**
  * Created by Adonay on 9/27/2017.

@@ -1,4 +1,4 @@
-package edu.wpi.alcogaitdatagatherer;
+package edu.wpi.alcogaitdatagatherer.ui;
 
 import android.Manifest;
 import android.content.Context;
@@ -44,6 +44,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import edu.wpi.alcogaitdatagatherer.R;
+import edu.wpi.alcogaitdatagatherer.models.LiteWalk;
+import edu.wpi.alcogaitdatagatherer.tasks.LiteWalkToCSVTask;
 import edu.wpi.alcogaitdatagatherercommon.CommonCode;
 import edu.wpi.alcogaitdatagatherercommon.WalkType;
 
@@ -161,9 +164,9 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
     }
 
     private void registerSensorListeners(){
-        mSensorManager.registerListener(this, mHeartRateSensor, SensorManager.SENSOR_DELAY_FASTEST);
-        mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
-        mSensorManager.registerListener(this, mGyroscope, SensorManager.SENSOR_DELAY_FASTEST);
+        mSensorManager.registerListener(this, mHeartRateSensor, CommonCode.DELAY_IN_MILLISECONDS * 1000);
+        mSensorManager.registerListener(this, mAccelerometer, CommonCode.DELAY_IN_MILLISECONDS * 1000);
+        mSensorManager.registerListener(this, mGyroscope, CommonCode.DELAY_IN_MILLISECONDS * 1000);
     }
 
     private void unregisterSensorListeners(){

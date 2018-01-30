@@ -1,4 +1,4 @@
-package edu.wpi.alcogaitdatagatherer;
+package edu.wpi.alcogaitdatagatherer.ui.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -14,6 +14,11 @@ import android.widget.EditText;
 import android.widget.RadioButton;
 
 import java.util.Locale;
+
+import edu.wpi.alcogaitdatagatherer.models.Gender;
+import edu.wpi.alcogaitdatagatherer.R;
+import edu.wpi.alcogaitdatagatherer.models.TestSubject;
+import edu.wpi.alcogaitdatagatherer.ui.adapters.SurveyListAdapter;
 
 public class SurveyFormActivity extends AppCompatActivity{
 

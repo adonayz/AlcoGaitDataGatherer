@@ -1,4 +1,4 @@
-package edu.wpi.alcogaitdatagatherer;
+package edu.wpi.alcogaitdatagatherer.ui.activities;
 
 import android.Manifest;
 import android.content.Intent;
@@ -28,12 +28,15 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 
+import edu.wpi.alcogaitdatagatherer.R;
+import edu.wpi.alcogaitdatagatherer.ui.adapters.SurveyListAdapter;
+
 public class HomeActivity extends AppCompatActivity implements BoxAuthentication.AuthListener{
 
     private SurveyListAdapter surveyListAdapter;
     private ListView surveyListView;
     private LinkedList<File> surveyFiles;
-    static final String FILE_SHOULD_START_WITH = "ID_";
+    public static final String FILE_SHOULD_START_WITH = "ID_";
     //static final String FILE_SHOULD_END_WITH = ".csv";
     private static final int READ_WRITE_PERMISSION_CODE = 1000;
 

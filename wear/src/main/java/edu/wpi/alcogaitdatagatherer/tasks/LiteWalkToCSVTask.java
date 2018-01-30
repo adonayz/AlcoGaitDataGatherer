@@ -1,4 +1,4 @@
-package edu.wpi.alcogaitdatagatherer;
+package edu.wpi.alcogaitdatagatherer.tasks;
 
 import android.os.AsyncTask;
 
@@ -7,6 +7,9 @@ import com.opencsv.CSVWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+
+import edu.wpi.alcogaitdatagatherer.ui.WearHomeActivity;
+import edu.wpi.alcogaitdatagatherer.models.LiteWalk;
 
 /**
  * Created by Adonay on 1/1/2018.
@@ -17,7 +20,7 @@ public class LiteWalkToCSVTask extends AsyncTask<LiteWalk, Void, Boolean> {
     private final String[] space = {""};
     private WearHomeActivity activity;
 
-    LiteWalkToCSVTask(File file, WearHomeActivity activity) {
+    public LiteWalkToCSVTask(File file, WearHomeActivity activity) {
         this.file = file;
         this.activity = activity;
     }

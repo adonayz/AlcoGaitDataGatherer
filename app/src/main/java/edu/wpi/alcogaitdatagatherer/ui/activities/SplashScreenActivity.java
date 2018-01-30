@@ -1,4 +1,4 @@
-package edu.wpi.alcogaitdatagatherer;
+package edu.wpi.alcogaitdatagatherer.ui.activities;
 
 import android.content.Intent;
 import android.os.Bundle;

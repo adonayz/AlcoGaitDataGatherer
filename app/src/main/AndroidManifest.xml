@@ -29,7 +29,7 @@
         android:theme="@style/AppTheme">
 
         <activity
-            android:name=".SplashScreenActivity"
+            android:name=".ui.activities.SplashScreenActivity"
             android:theme="@style/SplashTheme"
             android:launchMode="singleInstance">
             <intent-filter>
@@ -39,27 +39,27 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".HomeActivity"
+            android:name=".ui.activities.HomeActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme" />
         <activity
-            android:name=".SurveyFormActivity"
-            android:parentActivityName=".HomeActivity">
+            android:name=".ui.activities.SurveyFormActivity"
+            android:parentActivityName=".ui.activities.HomeActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".HomeActivity" />
+                android:value=".ui.activities.HomeActivity" />
         </activity>
         <activity
-            android:name=".DataGatheringActivity"
-            android:parentActivityName=".SurveyFormActivity"
+            android:name=".ui.activities.DataGatheringActivity"
+            android:parentActivityName=".ui.activities.SurveyFormActivity"
             android:screenOrientation="portrait"
             android:launchMode="singleInstance">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".SurveyFormActivity" />
+                android:value=".ui.activities.SurveyFormActivity" />
         </activity>
         <activity
-            android:name=".SettingsActivity"
+            android:name=".ui.activities.SettingsActivity"
             android:launchMode="singleInstance" />
     </application>
 

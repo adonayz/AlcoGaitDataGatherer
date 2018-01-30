@@ -1,4 +1,4 @@
-package edu.wpi.alcogaitdatagatherer;
+package edu.wpi.alcogaitdatagatherer.models;
 
 import java.io.Serializable;
 import java.util.Arrays;

@@ -1,4 +1,4 @@
-package edu.wpi.alcogaitdatagatherer;
+package edu.wpi.alcogaitdatagatherer.interfaces;
 
 /**
  * Created by Adonay on 10/24/2017.

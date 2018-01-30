@@ -1,4 +1,4 @@
-package edu.wpi.alcogaitdatagatherer;
+package edu.wpi.alcogaitdatagatherer.ui.fragments;
 
 import android.app.DialogFragment;
 import android.content.Context;
@@ -16,6 +16,11 @@ import android.view.ViewGroup;
 import android.view.Window;
 
 import java.util.LinkedList;
+
+import edu.wpi.alcogaitdatagatherer.R;
+import edu.wpi.alcogaitdatagatherer.models.TestSubject;
+import edu.wpi.alcogaitdatagatherer.ui.activities.DataGatheringActivity;
+import edu.wpi.alcogaitdatagatherer.ui.adapters.MyWalkReportRecyclerViewAdapter;
 
 public class WalkReportFragment extends DialogFragment {
 

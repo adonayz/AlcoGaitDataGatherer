@@ -1,4 +1,4 @@
-package edu.wpi.alcogaitdatagatherer;
+package edu.wpi.alcogaitdatagatherer.ui.views;
 
 import android.animation.ObjectAnimator;
 import android.content.Context;
@@ -12,11 +12,14 @@ import android.widget.TextView;
 
 import com.github.lzyzsd.circleprogress.DonutProgress;
 
+import edu.wpi.alcogaitdatagatherer.interfaces.BoxUploadProgressListener;
+import edu.wpi.alcogaitdatagatherer.R;
+
 /**
  * Created by Adonay on 10/24/2017.
  */
 
-public class CustomSurveyView extends RelativeLayout  implements BoxUploadProgressListener{
+public class CustomSurveyView extends RelativeLayout implements BoxUploadProgressListener {
     View rootView;
     LinearLayout linearLayout;
     TextView fileIDTextView;

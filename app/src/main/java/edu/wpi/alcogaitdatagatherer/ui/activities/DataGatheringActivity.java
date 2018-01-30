@@ -1,4 +1,4 @@
-package edu.wpi.alcogaitdatagatherer;
+package edu.wpi.alcogaitdatagatherer.ui.activities;
 
 import android.Manifest;
 import android.app.AlertDialog;
@@ -53,6 +53,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import edu.wpi.alcogaitdatagatherer.R;
+import edu.wpi.alcogaitdatagatherer.models.SensorRecorder;
+import edu.wpi.alcogaitdatagatherer.models.TestSubject;
+import edu.wpi.alcogaitdatagatherer.ui.fragments.WalkReportFragment;
 import edu.wpi.alcogaitdatagatherercommon.CommonCode;
 import edu.wpi.alcogaitdatagatherercommon.WalkType;
 import it.sephiroth.android.library.tooltip.Tooltip;
@@ -84,7 +88,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
     private boolean isReceivingFromWatch = false;
     private boolean allowBACInput = true;
     private static final int READ_WRITE_PERMISSION_CODE = 1000;
-    static final String TB_FOR_WALK_REPORT = "walk_report";
+    public static final String TB_FOR_WALK_REPORT = "walk_report";
     private int samplesReceivedFromWatch = 0;
     private int totalSampleSizeInWearable = 0;
 

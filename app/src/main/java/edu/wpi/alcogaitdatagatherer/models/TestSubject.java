@@ -1,4 +1,4 @@
-package edu.wpi.alcogaitdatagatherer;
+package edu.wpi.alcogaitdatagatherer.models;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -9,6 +9,8 @@ import android.widget.TextView;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.LinkedList;
+
+import edu.wpi.alcogaitdatagatherer.R;
 
 /**
  * Created by Adonay on 9/27/2017.

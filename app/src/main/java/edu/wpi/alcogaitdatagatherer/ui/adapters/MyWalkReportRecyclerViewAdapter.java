@@ -1,4 +1,4 @@
-package edu.wpi.alcogaitdatagatherer;
+package edu.wpi.alcogaitdatagatherer.ui.adapters;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -10,6 +10,10 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import java.util.LinkedList;
+
+import edu.wpi.alcogaitdatagatherer.R;
+import edu.wpi.alcogaitdatagatherer.models.TestSubject;
+import edu.wpi.alcogaitdatagatherer.ui.fragments.WalkReportFragment;
 
 public class MyWalkReportRecyclerViewAdapter extends RecyclerView.Adapter<MyWalkReportRecyclerViewAdapter.ViewHolder> implements CompoundButton.OnCheckedChangeListener {
 

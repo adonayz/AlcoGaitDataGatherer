@@ -1,4 +1,4 @@
-package edu.wpi.alcogaitdatagatherer;
+package edu.wpi.alcogaitdatagatherer.models;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -24,6 +24,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.LinkedList;
 
+import edu.wpi.alcogaitdatagatherer.tasks.SaveWalkHolderToCSVTask;
+import edu.wpi.alcogaitdatagatherer.ui.activities.DataGatheringActivity;
 import edu.wpi.alcogaitdatagatherercommon.CommonCode;
 import edu.wpi.alcogaitdatagatherercommon.WalkType;
 
@@ -64,7 +66,7 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
     private String TAG = "SensorRecorder";
     private static final float ALPHA = 0.15f;
 
-    SensorRecorder(DataGatheringActivity gatheringActivity, String rootFolderName, TestSubject testSubject, TextView walkNumberDisplay, TextView walkLogDisplay, Button startButton) {
+    public SensorRecorder(DataGatheringActivity gatheringActivity, String rootFolderName, TestSubject testSubject, TextView walkNumberDisplay, TextView walkLogDisplay, Button startButton) {
         this.testSubject = testSubject;
         this.mSensorManager = (SensorManager) gatheringActivity.getSystemService(SENSOR_SERVICE);
         this.mAccelerometer = mSensorManager.getDefaultSensor(TYPE_ACCELEROMETER);
@@ -134,7 +136,7 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
 
     }
 
-    void startRecording(Double BAC) {
+    public void startRecording(Double BAC) {
         isRecording = true;
         registerListeners();
         walkLogDisplay.setVisibility(View.GONE);
@@ -143,7 +145,7 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
         }
     }
 
-    boolean stopRecording() {
+    public boolean stopRecording() {
         isRecording = false;
         unregisterListeners();
         walkLogDisplay.setVisibility(View.VISIBLE);
@@ -202,7 +204,7 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
         walkNumberDisplay.setText("Walk Number " + (currentWalkNumber) + " : " + currentWalkType.toString());
     }
 
-    void restartCurrentWalkNumber(final EditText bacInput, DataGatheringActivity activity) {
+    public void restartCurrentWalkNumber(final EditText bacInput, DataGatheringActivity activity) {
         DialogInterface.OnClickListener dialogClickListener = (dialog, which) -> {
             switch (which) {
                 case DialogInterface.BUTTON_POSITIVE:
@@ -238,7 +240,7 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
         walkLogDisplay.setVisibility(View.GONE);
     }
 
-    void reDoWalk(final EditText bacInput, DataGatheringActivity activity) {
+    public void reDoWalk(final EditText bacInput, DataGatheringActivity activity) {
         DialogInterface.OnClickListener dialogClickListener = (dialog, which) -> {
             switch (which) {
                 case DialogInterface.BUTTON_POSITIVE:

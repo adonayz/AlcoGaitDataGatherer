@@ -1,4 +1,4 @@
-package edu.wpi.alcogaitdatagatherer;
+package edu.wpi.alcogaitdatagatherer.ui.adapters;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,6 +16,11 @@ import java.text.SimpleDateFormat;
 import java.util.LinkedList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import edu.wpi.alcogaitdatagatherer.R;
+import edu.wpi.alcogaitdatagatherer.ui.views.CustomSurveyView;
+import edu.wpi.alcogaitdatagatherer.ui.activities.HomeActivity;
+import edu.wpi.alcogaitdatagatherer.tasks.UploadToBoxTask;
 
 /**
  * Created by Adonay on 9/26/2017.

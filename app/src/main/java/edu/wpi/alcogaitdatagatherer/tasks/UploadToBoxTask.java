@@ -1,4 +1,4 @@
-package edu.wpi.alcogaitdatagatherer;
+package edu.wpi.alcogaitdatagatherer.tasks;
 
 import android.os.AsyncTask;
 import android.util.Log;
@@ -15,6 +15,8 @@ import com.box.androidsdk.content.requests.BoxRequestsFile;
 import java.io.File;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
+
+import edu.wpi.alcogaitdatagatherer.ui.views.CustomSurveyView;
 
 /**
  * Created by Adonay on 1/4/2018.

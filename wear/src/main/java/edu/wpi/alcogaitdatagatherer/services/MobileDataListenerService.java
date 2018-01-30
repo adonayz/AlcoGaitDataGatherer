@@ -1,4 +1,4 @@
-package edu.wpi.alcogaitdatagatherer;
+package edu.wpi.alcogaitdatagatherer.services;
 
 import android.content.Intent;
 import android.support.annotation.NonNull;
@@ -8,6 +8,7 @@ import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
 
+import edu.wpi.alcogaitdatagatherer.ui.WearHomeActivity;
 import edu.wpi.alcogaitdatagatherercommon.CommonCode;
 
 /**

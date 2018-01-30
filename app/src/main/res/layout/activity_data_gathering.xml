@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:keepScreenOn="true"
-    tools:context="edu.wpi.alcogaitdatagatherer.DataGatheringActivity">
+    tools:context="edu.wpi.alcogaitdatagatherer.ui.activities.DataGatheringActivity">
 
     <android.support.design.widget.AppBarLayout
         android:id="@+id/toolbarParent"

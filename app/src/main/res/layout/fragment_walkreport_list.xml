@@ -10,7 +10,7 @@
     android:layout_marginRight="50sp"
     android:layout_marginBottom="50sp"
     android:background="@drawable/fragment_background"
-    tools:context="edu.wpi.alcogaitdatagatherer.WalkReportFragment">
+    tools:context="edu.wpi.alcogaitdatagatherer.ui.fragments.WalkReportFragment">
 
     <LinearLayout
         android:layout_width="match_parent"

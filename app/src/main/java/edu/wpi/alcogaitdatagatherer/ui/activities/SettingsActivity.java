@@ -1,8 +1,10 @@
-package edu.wpi.alcogaitdatagatherer;
+package edu.wpi.alcogaitdatagatherer.ui.activities;
 
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
+
+import edu.wpi.alcogaitdatagatherer.R;
 
 /**
  * Created by Adonay on 12/8/2017.
