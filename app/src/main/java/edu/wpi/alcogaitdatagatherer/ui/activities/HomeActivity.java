@@ -1,9 +1,12 @@
 package edu.wpi.alcogaitdatagatherer.ui.activities;
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
@@ -11,9 +14,12 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.ContextMenu;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -23,12 +29,17 @@ import com.box.androidsdk.content.BoxConfig;
 import com.box.androidsdk.content.auth.BoxAuthentication;
 import com.box.androidsdk.content.models.BoxSession;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 
 import edu.wpi.alcogaitdatagatherer.R;
+import edu.wpi.alcogaitdatagatherer.models.Gender;
+import edu.wpi.alcogaitdatagatherer.models.TestSubject;
 import edu.wpi.alcogaitdatagatherer.ui.adapters.SurveyListAdapter;
 
 public class HomeActivity extends AppCompatActivity implements BoxAuthentication.AuthListener{
@@ -39,6 +50,8 @@ public class HomeActivity extends AppCompatActivity implements BoxAuthentication
     public static final String FILE_SHOULD_START_WITH = "ID_";
     //static final String FILE_SHOULD_END_WITH = ".csv";
     private static final int READ_WRITE_PERMISSION_CODE = 1000;
+    private static final int RESUME = 1;
+    private static final int DELETE = 2;
 
     private static final String CLIENT_ID = "jqkqfexx2sdtk8fd145dwfexr851drh3";
     private static final String CLIENT_SECRET = "NjaaG4NrOjCFFpvRn2gSFr5YtEuiReCl";
@@ -69,6 +82,8 @@ public class HomeActivity extends AppCompatActivity implements BoxAuthentication
 
         surveyListView.setAdapter(surveyListAdapter);
 
+        registerForContextMenu(surveyListView);
+
         requestPermissions();
 
         if (isBoxPreferenceEnabled()) {
@@ -86,6 +101,30 @@ public class HomeActivity extends AppCompatActivity implements BoxAuthentication
         });
 
         uab = (FloatingActionButton) findViewById(R.id.uab);
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.list_context_menu, menu);
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        switch (item.getItemId()) {
+            case R.id.resume_gathering:
+                listContextSelectDialog(RESUME, info.position);
+                return true;
+            case R.id.delete_gathering:
+                listContextSelectDialog(DELETE, info.position);
+                readFiles();
+                surveyListAdapter.notifyDataSetChanged();
+                return true;
+            default:
+                return super.onContextItemSelected(item);
+        }
     }
 
     public void requestPermissions(){
@@ -264,6 +303,147 @@ public class HomeActivity extends AppCompatActivity implements BoxAuthentication
             uab.setVisibility(View.GONE);
         }
         surveyListAdapter.notifyDataSetChanged();
+    }
+
+    public void listContextSelectDialog(int selection, int position) {
+        File currentFile = surveyFiles.get(position);
+        String subjectID = currentFile.getName().substring(HomeActivity.FILE_SHOULD_START_WITH.length(),
+                currentFile.getName().length()).trim();
+        subjectID.trim();
+
+        DialogInterface.OnClickListener dialogClickListener = (dialog, which) -> {
+            switch (which) {
+                case DialogInterface.BUTTON_POSITIVE:
+                    if (selection == RESUME) {
+                        if (currentFile.isDirectory()) {
+                            File reportFile = null;
+                            int maxWalks = 1;
+
+                            for (File child : currentFile.listFiles()) {
+                                if (child.getName().equals("report.txt")) {
+                                    reportFile = child;
+                                }
+                                if (child.getName().startsWith("walk_")) {
+                                    int walkNumber = Integer.parseInt(child.getName().substring(5, child.getName().length()).trim());
+                                    if (walkNumber > maxWalks) {
+                                        maxWalks = walkNumber;
+                                    }
+                                }
+                            }
+                            if (reportFile == null) {
+                                showContextErrorDialog(RESUME);
+                                return;
+                            }
+                            TestSubject testSubject = extractTestSubjectInfo(reportFile, subjectID);
+                            testSubject.setStartingWalkNumber(maxWalks + 1);
+
+                            Intent intent = new Intent(HomeActivity.this, DataGatheringActivity.class);
+                            intent.putExtra("test_subject", testSubject);
+                            startActivity(intent);
+                        }
+                    } else if (selection == DELETE) {
+                        if (!deleteDirectory(currentFile)) {
+                            showContextErrorDialog(DELETE);
+                        }
+                        this.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(currentFile)));
+                        readFiles();
+                        surveyListAdapter.notifyDataSetChanged();
+                    }
+
+                    break;
+
+                case DialogInterface.BUTTON_NEGATIVE:
+                    break;
+            }
+        };
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        String title = "";
+        String message = "Are you sure that you want to ";
+
+        if (selection == RESUME) {
+            title += "Resume Data Gathering";
+            message += "resume gathering data for Subject ID " + subjectID + "?";
+        } else if (selection == DELETE) {
+            title += "Delete Gathered Data";
+            message += "delete all the data gathered from Subject ID " + subjectID + "?";
+        }
+
+        builder.setTitle(title);
+        builder.setMessage(message).setPositiveButton("Yes", dialogClickListener)
+                .setNegativeButton("No", dialogClickListener).show();
+
+    }
+
+    TestSubject extractTestSubjectInfo(File file, String subjectID) {
+        Gender gender = null;
+        int age = 0;
+        double weight = 0;
+        int inches = 0;
+        int feet = 0;
+
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                line = line.trim();
+                if (line.startsWith("Gender:")) {
+                    gender = Gender.getEnum(line.substring(8, line.length()).trim());
+                } else if (line.startsWith("Age:")) {
+                    age = Integer.valueOf(line.substring(5, line.length()).trim());
+                } else if (line.startsWith("Weight:")) {
+                    weight = Double.valueOf(line.substring(8, line.length()).trim());
+                } else if (line.startsWith("Height(ft and inches):")) {
+                    String temp = line.substring(23, line.length()).trim();
+                    for (int i = 1; i < temp.length(); i++) {
+                        if (temp.charAt(i) == '\'') {
+                            inches = Integer.valueOf(temp.substring(0, i).trim());
+                            feet = Integer.valueOf(temp.substring(i + 2, temp.length() - 2).trim());
+                            break;
+                        }
+
+                    }
+                }
+            }
+            br.close();
+        } catch (IOException e) {
+            //You'll need to add proper error handling here
+        }
+
+        return new TestSubject(subjectID, gender, age, weight, inches, feet);
+    }
+
+    public void showContextErrorDialog(int selection) {
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+        if (selection == RESUME) {
+            alert.setTitle("Resume Error");
+            alert.setMessage("Could not resume data gathering for this Subject ID.");
+        } else if (selection == DELETE) {
+            alert.setTitle("Delete Error");
+            alert.setMessage("Could not delete this data set. Delete it manually.");
+        }
+        alert.setPositiveButton("OK", null);
+        alert.show();
+    }
+
+    public boolean deleteDirectory(File path) {
+        if (path.exists()) {
+            File[] files = path.listFiles();
+            if (files == null) {
+                return true;
+            }
+            for (int i = 0; i < files.length; i++) {
+                if (files[i].isDirectory()) {
+                    deleteDirectory(files[i]);
+                } else {
+                    files[i].delete();
+                }
+                this.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(files[i])));
+            }
+        }
+
+        return (path.delete());
     }
 
 }

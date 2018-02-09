@@ -2,6 +2,7 @@ package edu.wpi.alcogaitdatagatherer.tasks;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.media.MediaScannerConnection;
 import android.os.AsyncTask;
 import android.widget.EditText;
 
@@ -27,6 +28,7 @@ public class SaveWalkHolderToCSVTask extends AsyncTask<Void, Integer, Boolean> {
     private final String[] space = {""};
     private SensorRecorder sensorRecorder;
     private EditText bacInput;
+    private File file;
 
     public SaveWalkHolderToCSVTask(SensorRecorder sensorRecorder, String mFolderName, EditText bacInput) {
         this.sensorRecorder = sensorRecorder;
@@ -52,11 +54,11 @@ public class SaveWalkHolderToCSVTask extends AsyncTask<Void, Integer, Boolean> {
     @Override
     protected Boolean doInBackground(Void... voids) {
         String fileName = mFolderName + File.separator + "phone.csv";
-        File f = new File(fileName);
+        file = new File(fileName);
         try {
             CSVWriter writer;
             FileWriter mFileWriter;
-            if (f.exists() && !f.isDirectory()) {
+            if (file.exists() && !file.isDirectory()) {
                 mFileWriter = new FileWriter(fileName, false);
             } else {
                 mFileWriter = new FileWriter(fileName);
@@ -122,6 +124,7 @@ public class SaveWalkHolderToCSVTask extends AsyncTask<Void, Integer, Boolean> {
             sensorRecorder.incrementWalkNumber();
             bacInput.setEnabled(true);
             bacInput.setText("");
+            MediaScannerConnection.scanFile(bacInput.getContext(), new String[]{file.getAbsolutePath()}, null, null);
         } else {
             //show file save error dialog
             AlertDialog.Builder alert = new AlertDialog.Builder(bacInput.getContext());

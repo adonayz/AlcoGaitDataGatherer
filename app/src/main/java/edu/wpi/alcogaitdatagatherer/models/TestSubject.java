@@ -29,6 +29,7 @@ public class TestSubject implements Serializable {
     //private LinkedList<Walk> successfulWalks;
     //private LinkedList<Walk> reportedWalks;
     private String reportMessage;
+    private int startingWalkNumber;
 
     public TestSubject(String subjectID, Gender gender, int age, double weight, int heightFeet, int heightInches) {
         this.subjectID = subjectID;
@@ -42,6 +43,7 @@ public class TestSubject implements Serializable {
         //successfulWalks = new LinkedList<>();
         //reportedWalks = new LinkedList<>();
         reportMessage = "";
+        startingWalkNumber = 1;
     }
 
     public String getSubjectID() {
@@ -149,6 +151,14 @@ public class TestSubject implements Serializable {
                 + "\nAge: " + String.valueOf(age) + "\nWeight: " + String.valueOf(weight)
                 + "\nHeight(ft and inches): " + String.valueOf(heightFeet) + "' "
                 + String.valueOf(heightInches) + "''\n";
+    }
+
+    public int getStartingWalkNumber() {
+        return startingWalkNumber;
+    }
+
+    public void setStartingWalkNumber(int startingWalkNumber) {
+        this.startingWalkNumber = startingWalkNumber;
     }
 
     // HUGE DESIGN (DATA STRUCTURE) CHANGES TO DECREASE MEMORY USAGE

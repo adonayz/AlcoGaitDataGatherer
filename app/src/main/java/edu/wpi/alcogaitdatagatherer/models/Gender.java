@@ -18,4 +18,14 @@ public enum Gender {
     public String toString(){
         return genderString;
     }
+
+    public static Gender getEnum(String gender) {
+        if (gender.equals(FEMALE.toString())) {
+            return FEMALE;
+        } else if (gender.equals(MALE.toString())) {
+            return MALE;
+        } else {
+            return null;
+        }
+    }
 }

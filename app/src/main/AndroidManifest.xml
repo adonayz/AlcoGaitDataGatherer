@@ -30,8 +30,7 @@
 
         <activity
             android:name=".ui.activities.SplashScreenActivity"
-            android:theme="@style/SplashTheme"
-            android:launchMode="singleInstance">
+            android:theme="@style/SplashTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -52,8 +51,7 @@
         <activity
             android:name=".ui.activities.DataGatheringActivity"
             android:parentActivityName=".ui.activities.SurveyFormActivity"
-            android:screenOrientation="portrait"
-            android:launchMode="singleInstance">
+            android:screenOrientation="portrait">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ui.activities.SurveyFormActivity" />

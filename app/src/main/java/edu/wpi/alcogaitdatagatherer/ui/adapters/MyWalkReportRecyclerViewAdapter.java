@@ -47,7 +47,7 @@ public class MyWalkReportRecyclerViewAdapter extends RecyclerView.Adapter<MyWalk
     public void onBindViewHolder(final ViewHolder holder, int position) {
         // If view is not the text box (EditText)
         if (!(position == checkBoxStates.size())) {
-            holder.walkNumber = position + 1;
+            holder.walkNumber = position + 1 + (testSubject.getStartingWalkNumber() - 1);
             holder.walkNumberView.setText("Walk " + holder.walkNumber);
             holder.walkDetailsView.setText(testSubject.getSampleSizeMap().get(holder.walkNumber) + " data samples");
             holder.checkBox.setTag(position);

@@ -1,11 +1,13 @@
 package edu.wpi.alcogaitdatagatherer.models;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.util.Log;
@@ -79,12 +81,12 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
         this.walkLogDisplay = walkLogDisplay;
         this.startButton = startButton;
         logQueue = new LinkedList<Walk>();
-        currentWalkNumber = 1;
+        currentWalkNumber = testSubject.getStartingWalkNumber();
         currentWalkType = WalkType.NORMAL;
         updateWalkNumberDisplay();
         testSubject.setCurrentWalkHolder(new WalkHolder(currentWalkNumber));
         testSubject.setWalkTypeAmount(walkNumberDisplay.getContext());
-        prepareReportFile();
+        prepareReportFile(walkNumberDisplay.getContext());
     }
 
     public void registerListeners() {
@@ -190,7 +192,7 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
                 .setNegativeButton("No", dialogClickListener).show();*/
     }
 
-    public void prepareWalkStorage() {
+    public void prepareWalkStorage(Context context) {
         walkFolderName = rootFolderName + File.separator + "walk_" + String.valueOf(testSubject.getCurrentWalkHolder().getWalkNumber());
         File f = new File(walkFolderName);
         f.mkdirs();
@@ -394,7 +396,7 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
         startButton.setText("START WALK");
     }
 
-    public void prepareReportFile() {
+    public void prepareReportFile(Context context) {
         final File file = new File(rootFolderName, "report.txt");
 
         try {
@@ -413,9 +415,10 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
         } catch (IOException e) {
             Log.e("Exception", "File write failed: " + e.toString());
         }
+        MediaScannerConnection.scanFile(context, new String[]{file.getAbsolutePath()}, null, null);
     }
 
-    public void saveWalkReport() {
+    public void saveWalkReport(Context context) {
         final File file = new File(rootFolderName, "report.txt");
 
         try {
@@ -429,7 +432,7 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
             boolean hasReportedWalks = false;
             for (int i = 0; i < testSubject.getBooleanWalksList().size(); i++) {
                 if (testSubject.getBooleanWalksList().get(i)) {
-                    bufferWriter.append(String.valueOf(i + 1));
+                    bufferWriter.append(String.valueOf(i + 1 + (testSubject.getStartingWalkNumber() - 1)));
                     if (i != testSubject.getBooleanWalksList().size() - 1 && testSubject.getBooleanWalksList().size() > 1) {
                         bufferWriter.append(", ");
                     }
@@ -450,6 +453,7 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
         } catch (IOException e) {
             Log.e("Exception", "File write failed: " + e.toString());
         }
+        MediaScannerConnection.scanFile(context, new String[]{file.getAbsolutePath()}, null, null);
     }
 
     public WalkType getCurrentWalkType() {
@@ -466,6 +470,7 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
 
             try {
                 file.createNewFile();
+                MediaScannerConnection.scanFile(activity, new String[]{file.getAbsolutePath()}, null, null);
             } catch (IOException e) {
                 //handle error
             }

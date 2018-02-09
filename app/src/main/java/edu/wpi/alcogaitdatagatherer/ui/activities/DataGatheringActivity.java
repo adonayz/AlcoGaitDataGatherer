@@ -111,7 +111,8 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
 
         prepareStoragePath();
 
-        sensorRecorder = new SensorRecorder(this, mFolderName, testSubject, walkNumberDisplay, walkLogDisplay, startButton);
+        sensorRecorder = new SensorRecorder(this, mFolderName, testSubject, walkNumberDisplay,
+                walkLogDisplay, startButton);
 
         setupTimer();
     }
@@ -274,7 +275,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
     private void startRecording(String bacInputText) {
         if(!sensorRecorder.isRecording()){
             if (sensorRecorder.getTestSubject().getCurrentWalkHolder().getNextWalkType() == null) {
-                sensorRecorder.prepareWalkStorage();
+                sensorRecorder.prepareWalkStorage(getApplicationContext());
                 requestSave();
                 if (isWearablePreferenceEnabled()) {
                     startProgressBar();
@@ -601,7 +602,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
 
         sensorRecorder.setTestSubject(testSubject);
 
-        sensorRecorder.saveWalkReport();
+        sensorRecorder.saveWalkReport(this);
 
         returnToHomeScreen();
     }
