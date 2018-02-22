@@ -283,7 +283,7 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
     }
 
 
-    void updateWalkLogDisplay(boolean addNewWalk) {
+    private void updateWalkLogDisplay(boolean addNewWalk) {
         int MAX_LOGS = 5;
 
         if (addNewWalk) {
@@ -300,7 +300,7 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
             Walk aWalk = logQueue.get(i);
             String walkTypeString;
             if (aWalk.getWalkType() == WalkType.STANDING_ON_ONE_FOOT) {
-                walkTypeString = "Stand 1 Foot";
+                walkTypeString = "STAND 1 FOOT";
             } else {
                 walkTypeString = aWalk.getWalkType().toString();
             }
@@ -310,7 +310,7 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
         walkLogDisplay.setText(walkLog);
     }
 
-    void clearWalkLog() {
+    private void clearWalkLog() {
         logQueue.clear();
         walkLogDisplay.setText("");
     }

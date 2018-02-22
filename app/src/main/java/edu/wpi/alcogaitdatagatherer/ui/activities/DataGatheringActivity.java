@@ -458,6 +458,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
                         break;
                     case CommonCode.WEARABLE_DISCONNECTED:
                         showToast("WEARABLE DISCONNECTED");
+                        resetRecordViews(false);
                         break;
                     case CommonCode.CHECK_IF_APP_OPEN:
                         notifyWearableActivity(CommonCode.WEAR_MESSAGE_PATH, CommonCode.APP_OPEN_ACK);
