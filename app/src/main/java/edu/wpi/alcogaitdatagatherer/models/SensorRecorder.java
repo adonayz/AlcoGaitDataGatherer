@@ -55,9 +55,14 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
     private Sensor mGyroscope;
     private Sensor mMagnetometer;
 
-    private float[] accelVal;
+    private float[] accVal;
     private float[] gyroVal;
     private float[] magVal;
+    private String lastAccData[] = {"", "", "", "", "", ""};
+    private String lastGyroData[] = {"", "", "", "", "", ""};
+    private String lastMagTimeStamp = "";
+    private boolean accRepeatFlag = false;
+    private boolean gyroRepeatFlag = false;
     private LinkedList<Walk> logQueue;
 
     private String rootFolderName;
@@ -108,26 +113,54 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
 
         if (isRecording) {
             String sensorName = sensorEvent.sensor.getName();
-
+            String newData[];
             if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-                accelVal = lowPass(sensorEvent.values.clone(), accelVal);
-                walk.addPhoneAccelerometerData(CommonCode.generatePrintableSensorData(sensorName, accelVal, sensorEvent.accuracy, sensorEvent.timestamp));
+                accVal = sensorEvent.values.clone();
+                newData = CommonCode.generatePrintableSensorData(sensorName, accVal, sensorEvent.accuracy, sensorEvent.timestamp);
+                if (!lastAccData[lastAccData.length - 1].equals(newData[newData.length - 1])) {
+                    if (accRepeatFlag) {
+                        if (lastGyroData[0].equals("")) {
+                            return;
+                        }
+                        walk.addPhoneGyroscopeData(lastGyroData);
+                    }
+                    walk.addPhoneAccelerometerData(newData);
+                    gyroRepeatFlag = false;
+                    accRepeatFlag = true;
+                    lastAccData = newData;
+                }
             }
             if (sensorEvent.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
-                gyroVal = lowPass(sensorEvent.values.clone(), gyroVal);
-                walk.addPhoneGyroscopeData(CommonCode.generatePrintableSensorData(sensorName, gyroVal, sensorEvent.accuracy, sensorEvent.timestamp));
+                gyroVal = sensorEvent.values.clone();
+                newData = CommonCode.generatePrintableSensorData(sensorName, gyroVal, sensorEvent.accuracy, sensorEvent.timestamp);
+                if (!lastGyroData[lastGyroData.length - 1].equals(newData[newData.length - 1])) {
+                    if (gyroRepeatFlag) {
+                        if (lastAccData[0].equals("")) {
+                            return;
+                        }
+                        walk.addPhoneAccelerometerData(lastAccData);
+                    }
+                    walk.addPhoneGyroscopeData(newData);
+                    accRepeatFlag = false;
+                    gyroRepeatFlag = true;
+                    lastGyroData = newData;
+                }
             }
             if (sensorEvent.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
-                magVal = lowPass(sensorEvent.values.clone(), magVal);
+                magVal = sensorEvent.values.clone();
             }
-            if (accelVal != null && magVal != null) {
+            if (accVal != null && magVal != null) {
                 float R[] = new float[9];
                 float I[] = new float[9];
-                boolean success = SensorManager.getRotationMatrix(R, I, accelVal, magVal);
+                boolean success = SensorManager.getRotationMatrix(R, I, accVal, magVal);
                 if (success) {
                     float compassVal[] = new float[3];
                     SensorManager.getOrientation(R, compassVal);
-                    walk.addCompassData(CommonCode.generatePrintableSensorData("Compass", compassVal, sensorEvent.accuracy, sensorEvent.timestamp));
+                    newData = CommonCode.generatePrintableSensorData("Compass", compassVal, sensorEvent.accuracy, sensorEvent.timestamp);
+                    if (!lastMagTimeStamp.equals(newData[newData.length - 1])) {
+                        walk.addCompassData(newData);
+                    }
+                    lastMagTimeStamp = newData[newData.length - 1];
                 }
             }
         }

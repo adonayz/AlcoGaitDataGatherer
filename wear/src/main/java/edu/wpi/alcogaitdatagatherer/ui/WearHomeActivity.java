@@ -19,6 +19,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.wearable.activity.WearableActivity;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.animation.AlphaAnimation;
 import android.widget.FrameLayout;
 import android.widget.TextView;
@@ -97,6 +98,8 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
     }
 
     private void initViews(){
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
         instructionTextView = findViewById(R.id.instruction);
         countdownTextView = findViewById(R.id.countdown);
         progressBarHolder = findViewById(R.id.progressBarHolder);
@@ -176,7 +179,7 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         if (isRecording) {
-            storeSensorData(sensorEvent.sensor.getType(), CommonCode.generatePrintableSensorData(sensorEvent.sensor.getName(), sensorEvent.values, sensorEvent.accuracy, sensorEvent.timestamp));
+            storeSensorData(sensorEvent.sensor.getType(), CommonCode.generatePrintableSensorData(sensorEvent.sensor.getName(), sensorEvent.values.clone(), sensorEvent.accuracy, sensorEvent.timestamp));
             recordedSamples++;
             //walkHolderLite.addSensorData(currentWalkType, generatePrintableSensorData(sensorEvent.sensor.getName(),sensorEvent.values, sensorEvent.accuracy, sensorEvent.timestamp, sensorEvent.sensor.getType()));
             //sendSensorData(sensorEvent.sensor.getType(), sensorEvent.sensor.getName(), sensorEvent.values, sensorEvent.accuracy, sensorEvent.timestamp);
