@@ -4,13 +4,16 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.media.MediaScannerConnection;
 import android.os.AsyncTask;
+import android.util.Log;
 import android.widget.EditText;
 
 import com.opencsv.CSVWriter;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.LinkedList;
 
 import edu.wpi.alcogaitdatagatherer.models.SensorRecorder;
 import edu.wpi.alcogaitdatagatherer.models.TestSubject;
@@ -28,11 +31,12 @@ public class SaveWalkHolderToCSVTask extends AsyncTask<Void, Integer, Boolean> {
     private final String[] space = {""};
     private SensorRecorder sensorRecorder;
     private EditText bacInput;
-    private File file;
+    private String rootFolder;
 
     public SaveWalkHolderToCSVTask(SensorRecorder sensorRecorder, String mFolderName, EditText bacInput) {
         this.sensorRecorder = sensorRecorder;
         this.mFolderName = mFolderName;
+        this.rootFolder = mFolderName;
         this.testSubject = sensorRecorder.getTestSubject();
         this.dialog = new ProgressDialog(bacInput.getContext());
         this.bacInput = bacInput;
@@ -41,6 +45,9 @@ public class SaveWalkHolderToCSVTask extends AsyncTask<Void, Integer, Boolean> {
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
+        mFolderName = mFolderName + File.separator + "phone";
+        File phoneRoot = new File(mFolderName);
+        phoneRoot.mkdirs();
         dialog.setCancelable(false);
         dialog.setTitle("Saving to phone internal storage");
         dialog.setTitle("Writing data to " + mFolderName);
@@ -53,19 +60,7 @@ public class SaveWalkHolderToCSVTask extends AsyncTask<Void, Integer, Boolean> {
 
     @Override
     protected Boolean doInBackground(Void... voids) {
-        String fileName = mFolderName + File.separator + "phone.csv";
-        file = new File(fileName);
         try {
-            CSVWriter writer;
-            FileWriter mFileWriter;
-            if (file.exists() && !file.isDirectory()) {
-                mFileWriter = new FileWriter(fileName, false);
-            } else {
-                mFileWriter = new FileWriter(fileName);
-            }
-
-            writer = new CSVWriter(mFileWriter);
-
             /*String testSubjectTitle[] = {"Subject ID", "Gender", "Age", "Weight", "Height(ft and inches)"};
 
             String testSubjectInformation[] = {testSubject.getSubjectID(), testSubject.getGender().toString(),
@@ -76,24 +71,48 @@ public class SaveWalkHolderToCSVTask extends AsyncTask<Void, Integer, Boolean> {
             writer.writeNext(testSubjectInformation);
             writer.writeNext(space);*/
 
-            int percentProgress = 0;
+            //saveBacAsFile();
+
+            double percentProgress = 0;
             int max = testSubject.getCurrentWalkHolder().getSampleSize();
             for (WalkType walkType : WalkType.values()) {
                 if (testSubject.getCurrentWalkHolder().hasWalk(walkType)) {
-                    writer.writeNext(new String[]{walkType.toString()});
-                    writer.writeNext(space);
-                    for (String[] data : testSubject.getCurrentWalkHolder().get(walkType).toCSVFormat()) {
-                        writer.writeNext(data);
-                        if ((++savedSamples / max) * 100 > percentProgress) {
-                            percentProgress = (savedSamples / max) * 100;
-                            publishProgress(percentProgress);
+                    String walkTypeFolderName = mFolderName + File.separator + walkType.toNoSpaceString();
+                    File walkTypeRoot = new File(walkTypeFolderName);
+                    walkTypeRoot.mkdirs();
+                    LinkedList<LinkedList<String[]>> CSVFormat = testSubject.getCurrentWalkHolder().get(walkType).toCSVFormat();
+                    File file;
+                    for (int i = 0; i < CSVFormat.size(); i++) {
+                        String fileName = walkTypeFolderName + File.separator;
+                        if (i == 0) {
+                            fileName = fileName + "accelerometer.csv";
+                        } else if (i == 1) {
+                            fileName = fileName + "gyroscope.csv";
+                        } else if (i == 2) {
+                            fileName = fileName + "compass.csv";
                         }
+                        file = new File(fileName);
+
+                        CSVWriter writer;
+                        FileWriter mFileWriter;
+                        if (file.exists() && !file.isDirectory()) {
+                            mFileWriter = new FileWriter(fileName, false);
+                        } else {
+                            mFileWriter = new FileWriter(fileName);
+                        }
+
+                        writer = new CSVWriter(mFileWriter);
+
+                        writer.writeAll(CSVFormat.get(i));
+
+                        /*if (((++savedSamples/max) * 100) > percentProgress) {
+                            percentProgress = (savedSamples / max) * 100;
+                            publishProgress((int)percentProgress);
+                        }*/
+                        writer.close();
+                        MediaScannerConnection.scanFile(bacInput.getContext(), new String[]{file.getAbsolutePath()}, null, null);
                     }
 
-                    writer.writeNext(space);
-                    writer.writeNext(space);
-                    writer.writeNext(space);
-                    writer.writeNext(space);
                 }
             }
 
@@ -101,8 +120,6 @@ public class SaveWalkHolderToCSVTask extends AsyncTask<Void, Integer, Boolean> {
                 writer.writeNext(messageTitle);
                 String reportMessage[] = {testSubject.getReportMessage()};
                 writer.writeNext(reportMessage);*/
-
-            writer.close();
         } catch (IOException e) {
             e.printStackTrace();
             return false;
@@ -124,7 +141,6 @@ public class SaveWalkHolderToCSVTask extends AsyncTask<Void, Integer, Boolean> {
             sensorRecorder.incrementWalkNumber();
             bacInput.setEnabled(true);
             bacInput.setText("");
-            MediaScannerConnection.scanFile(bacInput.getContext(), new String[]{file.getAbsolutePath()}, null, null);
         } else {
             //show file save error dialog
             AlertDialog.Builder alert = new AlertDialog.Builder(bacInput.getContext());
@@ -134,5 +150,28 @@ public class SaveWalkHolderToCSVTask extends AsyncTask<Void, Integer, Boolean> {
             alert.setNegativeButton("NO", null);
             alert.show();
         }
+    }
+
+    private void saveBacAsFile() {
+        final File bac_file = new File(rootFolder, "bac_info.txt");
+
+        try {
+            if (!bac_file.exists()) {
+                bac_file.createNewFile();
+            }
+            FileWriter fileWriter = new FileWriter(bac_file, true);
+            BufferedWriter bufferWriter = new BufferedWriter(fileWriter);
+
+            bufferWriter.append("BAC = ");
+            bufferWriter.append(String.valueOf(testSubject.getCurrentWalkHolder().get(WalkType.NORMAL).getBAC()));
+            bufferWriter.append("\n");
+            bufferWriter.close();
+
+            fileWriter.flush();
+            fileWriter.close();
+        } catch (IOException e) {
+            Log.e("Exception", "File write failed: " + e.toString());
+        }
+        MediaScannerConnection.scanFile(bacInput.getContext(), new String[]{bac_file.getAbsolutePath()}, null, null);
     }
 }

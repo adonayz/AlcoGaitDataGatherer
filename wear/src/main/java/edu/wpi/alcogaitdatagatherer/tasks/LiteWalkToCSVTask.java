@@ -44,18 +44,20 @@ public class LiteWalkToCSVTask extends AsyncTask<LiteWalk, Void, Boolean> {
             writer = new CSVWriter(mFileWriter);
 
             for (LiteWalk walk : walks) {
-                if (walk.getSampleSize() > 0) {
-                    writer.writeNext(new String[]{walk.getWalkType().toString()});
-                    writer.writeNext(space);
-                    for (String[] data : walk.toCSVFormat()) {
-                        writer.writeNext(data);
-                        //publishProgress(++savedSamples);
-                    }
+                if (walk != null) {
+                    if (walk.getSampleSize() > 0) {
+                        writer.writeNext(new String[]{walk.getWalkType().toString()});
+                        writer.writeNext(space);
+                        for (String[] data : walk.toCSVFormat()) {
+                            writer.writeNext(data);
+                            //publishProgress(++savedSamples);
+                        }
 
-                    writer.writeNext(space);
-                    writer.writeNext(space);
-                    writer.writeNext(space);
-                    writer.writeNext(space);
+                        writer.writeNext(space);
+                        writer.writeNext(space);
+                        writer.writeNext(space);
+                        writer.writeNext(space);
+                    }
                 }
             }
 

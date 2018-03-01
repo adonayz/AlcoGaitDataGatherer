@@ -2,7 +2,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <SwitchPreference
-        android:defaultValue="false"
+        android:defaultValue="true"
         android:key="@string/wear_collection_preference"
         android:title="Collect From Watch"
         android:summary="Collect accelerometer, gyroscope and heart rate data from a smart watch." />
@@ -11,4 +11,9 @@
         android:key="@string/box_integration_preference"
         android:title="Enable Box Integration"
         android:summary="Allow survey uploads to Box.com accounts directly from the phone." />
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="@string/wear_lock_preference"
+        android:title="Lock Phone Interface to Watch Response"
+        android:summary="Locks phone actions (such as starting or stopping walks) unless there is a response from the wearable device" />
 </PreferenceScreen>

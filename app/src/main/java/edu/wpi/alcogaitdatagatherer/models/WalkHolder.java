@@ -12,6 +12,7 @@ import edu.wpi.alcogaitdatagatherercommon.WalkType;
 
 public class WalkHolder implements Serializable {
     private int walkNumber;
+    private int BAC;
     private HashMap<WalkType, Walk> walkMap;
     private WalkType[] allowedWalkTypes;
 

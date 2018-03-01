@@ -2,11 +2,8 @@ package edu.wpi.alcogaitdatagatherer.models;
 
 import java.util.LinkedList;
 
+import edu.wpi.alcogaitdatagatherercommon.Readings;
 import edu.wpi.alcogaitdatagatherercommon.WalkType;
-
-import static android.hardware.Sensor.TYPE_ACCELEROMETER;
-import static android.hardware.Sensor.TYPE_GYROSCOPE;
-import static android.hardware.Sensor.TYPE_HEART_RATE;
 
 /**
  * Created by Adonay on 12/31/2017.
@@ -37,13 +34,11 @@ public class LiteWalk {
         this.heartRateDataList.add(sensorData);
     }
 
-    public void addSensorData(int sensorType, String[] sensorData) {
-        if (sensorType == TYPE_HEART_RATE) {
-            addHeartRateData(sensorData);
-        } else if (sensorType == TYPE_ACCELEROMETER) {
-            addWatchAccelerometerData(sensorData);
-        } else if (sensorType == TYPE_GYROSCOPE) {
-            addWatchGyroscopeData(sensorData);
+    public void addSensorData(Readings readings) {
+        addWatchAccelerometerData(readings.getAccelerometer());
+        addWatchGyroscopeData(readings.getGyroscope());
+        if (readings.getHeartRate() != null) {
+            addHeartRateData(readings.getHeartRate());
         }
     }
 
@@ -54,7 +49,17 @@ public class LiteWalk {
     }
 
     public int getSampleSize() {
-        return watchAccelerometerDataList.size() + watchGyroscopeDataList.size() + heartRateDataList.size();
+        int result = 0;
+        if (watchAccelerometerDataList != null) {
+            result = result + watchAccelerometerDataList.size();
+        }
+        if (watchGyroscopeDataList != null) {
+            result = result + watchGyroscopeDataList.size();
+        }
+        if (heartRateDataList != null) {
+            result = result + heartRateDataList.size();
+        }
+        return result;
     }
 
     public WalkType getWalkType() {

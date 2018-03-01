@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -19,9 +20,12 @@ import android.widget.Toast;
 
 import com.google.android.gms.wearable.ChannelClient;
 import com.google.android.gms.wearable.Wearable;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVWriter;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.LinkedList;
@@ -29,6 +33,7 @@ import java.util.LinkedList;
 import edu.wpi.alcogaitdatagatherer.tasks.SaveWalkHolderToCSVTask;
 import edu.wpi.alcogaitdatagatherer.ui.activities.DataGatheringActivity;
 import edu.wpi.alcogaitdatagatherercommon.CommonCode;
+import edu.wpi.alcogaitdatagatherercommon.Readings;
 import edu.wpi.alcogaitdatagatherercommon.WalkType;
 
 import static android.content.Context.SENSOR_SERVICE;
@@ -58,11 +63,7 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
     private float[] accVal;
     private float[] gyroVal;
     private float[] magVal;
-    private String lastAccData[] = {"", "", "", "", "", ""};
-    private String lastGyroData[] = {"", "", "", "", "", ""};
-    private String lastMagTimeStamp = "";
-    private boolean accRepeatFlag = false;
-    private boolean gyroRepeatFlag = false;
+    private Readings readings;
     private LinkedList<Walk> logQueue;
 
     private String rootFolderName;
@@ -95,6 +96,7 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
     }
 
     public void registerListeners() {
+        readings = new Readings();
         mSensorManager.registerListener(this, mAccelerometer, CommonCode.DELAY_IN_MILLISECONDS * 1000);
         mSensorManager.registerListener(this, mGyroscope, CommonCode.DELAY_IN_MILLISECONDS * 1000);
         mSensorManager.registerListener(this, mMagnetometer, CommonCode.DELAY_IN_MILLISECONDS * 1000);
@@ -113,38 +115,14 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
 
         if (isRecording) {
             String sensorName = sensorEvent.sensor.getName();
-            String newData[];
             if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
                 accVal = sensorEvent.values.clone();
-                newData = CommonCode.generatePrintableSensorData(sensorName, accVal, sensorEvent.accuracy, sensorEvent.timestamp);
-                if (!lastAccData[lastAccData.length - 1].equals(newData[newData.length - 1])) {
-                    if (accRepeatFlag) {
-                        if (lastGyroData[0].equals("")) {
-                            return;
-                        }
-                        walk.addPhoneGyroscopeData(lastGyroData);
-                    }
-                    walk.addPhoneAccelerometerData(newData);
-                    gyroRepeatFlag = false;
-                    accRepeatFlag = true;
-                    lastAccData = newData;
-                }
+                readings.setAccelerometer(CommonCode.generatePrintableSensorData(sensorName, accVal, sensorEvent.accuracy, sensorEvent.timestamp));
+
             }
             if (sensorEvent.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
                 gyroVal = sensorEvent.values.clone();
-                newData = CommonCode.generatePrintableSensorData(sensorName, gyroVal, sensorEvent.accuracy, sensorEvent.timestamp);
-                if (!lastGyroData[lastGyroData.length - 1].equals(newData[newData.length - 1])) {
-                    if (gyroRepeatFlag) {
-                        if (lastAccData[0].equals("")) {
-                            return;
-                        }
-                        walk.addPhoneAccelerometerData(lastAccData);
-                    }
-                    walk.addPhoneGyroscopeData(newData);
-                    accRepeatFlag = false;
-                    gyroRepeatFlag = true;
-                    lastGyroData = newData;
-                }
+                readings.setGyroscope(CommonCode.generatePrintableSensorData(sensorName, gyroVal, sensorEvent.accuracy, sensorEvent.timestamp));
             }
             if (sensorEvent.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
                 magVal = sensorEvent.values.clone();
@@ -156,13 +134,17 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
                 if (success) {
                     float compassVal[] = new float[3];
                     SensorManager.getOrientation(R, compassVal);
-                    newData = CommonCode.generatePrintableSensorData("Compass", compassVal, sensorEvent.accuracy, sensorEvent.timestamp);
-                    if (!lastMagTimeStamp.equals(newData[newData.length - 1])) {
-                        walk.addCompassData(newData);
-                    }
-                    lastMagTimeStamp = newData[newData.length - 1];
+                    readings.setCompass(CommonCode.generatePrintableSensorData("Compass", compassVal, sensorEvent.accuracy, sensorEvent.timestamp));
                 }
             }
+            if (readings.isPhoneReady()) {
+                readings.updateTime();
+                walk.addPhoneAccelerometerData(readings.getAccelerometer());
+                walk.addPhoneGyroscopeData(readings.getGyroscope());
+                walk.addCompassData(readings.getCompass());
+            }
+        } else {
+            unregisterListeners();
         }
     }
 
@@ -425,7 +407,9 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
         testSubject.addNewWalkHolder(new WalkHolder(currentWalkNumber));
         currentWalkType = testSubject.getCurrentWalkHolder().getNextWalkType();
         updateWalkNumberDisplay();
-        testSubject.setWalkTypeAmount(walkNumberDisplay.getContext());
+        if (!activity.isWearablePreferenceEnabled()) {
+            testSubject.setWalkTypeAmount(walkNumberDisplay.getContext());
+        }
         startButton.setText("START WALK");
     }
 
@@ -499,7 +483,11 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
             activity.startProgressBar();
             activity.updateProgressBarMessage("Receiving Data From Watch");
 
-            File file = new File(walkFolderName + File.separator + "watch.csv");
+            String watchFolderName = walkFolderName + File.separator + "watch";
+            File watchRoot = new File(watchFolderName);
+            watchRoot.mkdirs();
+
+            File file = new File(watchFolderName + File.separator + "unparsed_file.csv");
 
             try {
                 file.createNewFile();
@@ -520,9 +508,108 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
         activity.runOnUiThread(new Runnable() {
             public void run() {
                 Toast.makeText(activity, "File received!", Toast.LENGTH_SHORT).show();
-                activity.stopProgressBar();
+                activity.notifyWearableActivity(CommonCode.WEAR_MESSAGE_PATH, CommonCode.WATCH_FILE_ACK);
+                activity.updateProgressBarMessage("Extracting Watch File Data");
+                unparseWatchData();
             }
         });
+
+    }
+
+    public void unparseWatchData() {
+        String watchFolderName = walkFolderName + File.separator + "watch";
+        String[] BAC_ARRAY = {"BAC:", String.valueOf(walk.getBAC())};
+        try {
+            CSVReader reader = new CSVReader(new FileReader(watchFolderName + File.separator + "unparsed_file.csv"));
+            String[] nextLine;
+            String walkTypeFolderName = "";
+            String fileName;
+            File file = null;
+            CSVWriter writer = null;
+            FileWriter mFileWriter;
+            File walkTypeRoot;
+            boolean startWriting = false;
+            boolean hasWrittenBefore = false;
+            while ((nextLine = reader.readNext()) != null) {
+                for (WalkType walkType : WalkType.values()) {
+                    if (nextLine[0].equals(walkType.toString())) {
+                        walkTypeFolderName = watchFolderName + File.separator + walkType.toNoSpaceString();
+                        walkTypeRoot = new File(walkTypeFolderName);
+                        walkTypeRoot.mkdirs();
+                        startWriting = false;
+                        break;
+                    }
+                }
+                switch (nextLine[0]) {
+                    case "ACCELEROMETER DATA (WATCH)":
+                        if (hasWrittenBefore) {
+                            writer.close();
+                            MediaScannerConnection.scanFile(activity, new String[]{file.getAbsolutePath()}, null, null);
+                        }
+                        fileName = walkTypeFolderName + File.separator + "accelerometer.csv";
+                        file = new File(fileName);
+                        if (file.exists() && !file.isDirectory()) {
+                            mFileWriter = new FileWriter(fileName, false);
+                        } else {
+                            mFileWriter = new FileWriter(fileName);
+                        }
+                        writer = new CSVWriter(mFileWriter);
+                        startWriting = true;
+                        writer.writeNext(BAC_ARRAY);
+                        break;
+                    case "GYROSCOPE DATA (WATCH)":
+                        if (hasWrittenBefore) {
+                            writer.close();
+                            MediaScannerConnection.scanFile(activity, new String[]{file.getAbsolutePath()}, null, null);
+                        }
+                        fileName = walkTypeFolderName + File.separator + "gyroscope.csv";
+                        file = new File(fileName);
+                        if (file.exists() && !file.isDirectory()) {
+                            mFileWriter = new FileWriter(fileName, false);
+                        } else {
+                            mFileWriter = new FileWriter(fileName);
+                        }
+                        writer = new CSVWriter(mFileWriter);
+                        startWriting = true;
+                        writer.writeNext(BAC_ARRAY);
+                        break;
+                    case "HEART RATE DATA (WATCH)":
+                        if (hasWrittenBefore) {
+                            writer.close();
+                            MediaScannerConnection.scanFile(activity, new String[]{file.getAbsolutePath()}, null, null);
+                        }
+                        fileName = walkTypeFolderName + File.separator + "heart_rate.csv";
+                        file = new File(fileName);
+                        if (file.exists() && !file.isDirectory()) {
+                            mFileWriter = new FileWriter(fileName, false);
+                        } else {
+                            mFileWriter = new FileWriter(fileName);
+                        }
+                        writer = new CSVWriter(mFileWriter);
+                        startWriting = true;
+                        writer.writeNext(BAC_ARRAY);
+                        break;
+                }
+                if (startWriting) {
+                    hasWrittenBefore = true;
+                    writer.writeNext(nextLine);
+                }
+            }
+            if (hasWrittenBefore) {
+                writer.close();
+                MediaScannerConnection.scanFile(activity, new String[]{file.getAbsolutePath()}, null, null);
+            }
+        } catch (IOException e) {
+            Toast.makeText(activity, "File Extraction Error!", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+        }
+        activity.stopProgressBar();
+        if (activity.isWearablePreferenceEnabled()) {
+            testSubject.setWalkTypeAmount(walkNumberDisplay.getContext());
+        }
+        activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+        activity.lockPhone();
+
     }
 
     public void setActivity(DataGatheringActivity activity) {

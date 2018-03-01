@@ -59,34 +59,38 @@ public class Walk implements Serializable {
         this.watchSampleSize = sampleSize;
     }
 
-    public LinkedList<String[]> toCSVFormat(){
-        final String[] SPACE = {""};
+    public LinkedList<LinkedList<String[]>> toCSVFormat() {
         final String[] PHONE_ACCELEROMETER_TITLE = {"ACCELEROMETER DATA (PHONE)"};
         final String[] PHONE_GYROSCOPE_TITLE = {"GYROSCOPE DATA (PHONE)"};
         final String[] COMPASS_TITLE = {"COMPASS (PHONE)"};
+        final String[] BAC = {"BAC:", String.valueOf(this.BAC)};
 
         final String[] A_G_TABLE_HEADER = {"Sensor Name", "X", "Y", "Z", "Accuracy", "Timestamp"};
         final String[] COMPASS_TABLE_HEADER = {"Derived Data", "Azimuth", "Pitch", "Roll", "Accuracy", "Timestamp"};
 
-        LinkedList<String[]> csvFormat = new LinkedList<>();
+        LinkedList<String[]> accelFormat = new LinkedList<>();
+        LinkedList<String[]> gyroFormat = new LinkedList<>();
+        LinkedList<String[]> compassFormat = new LinkedList<>();
 
-        String[] walkInformation = {"BAC = " + BAC};
+        accelFormat.add(BAC);
+        accelFormat.add(PHONE_ACCELEROMETER_TITLE);
+        accelFormat.add(A_G_TABLE_HEADER);
+        accelFormat.addAll(phoneAccelerometerDataList);
+        gyroFormat.add(BAC);
+        gyroFormat.add(PHONE_GYROSCOPE_TITLE);
+        gyroFormat.add(A_G_TABLE_HEADER);
+        gyroFormat.addAll(phoneGyroscopeDataList);
+        compassFormat.add(BAC);
+        compassFormat.add(COMPASS_TITLE);
+        compassFormat.add(COMPASS_TABLE_HEADER);
+        compassFormat.addAll(compassDataList);
 
-        csvFormat.add(walkInformation);
-        csvFormat.add(SPACE);
-        csvFormat.add(PHONE_ACCELEROMETER_TITLE);
-        csvFormat.add(A_G_TABLE_HEADER);
-        csvFormat.addAll(phoneAccelerometerDataList);
-        csvFormat.add(SPACE);
-        csvFormat.add(PHONE_GYROSCOPE_TITLE);
-        csvFormat.add(A_G_TABLE_HEADER);
-        csvFormat.addAll(phoneGyroscopeDataList);
-        csvFormat.add(SPACE);
-        csvFormat.add(COMPASS_TITLE);
-        csvFormat.add(COMPASS_TABLE_HEADER);
-        csvFormat.addAll(compassDataList);
+        LinkedList<LinkedList<String[]>> result = new LinkedList<>();
+        result.add(accelFormat);
+        result.add(gyroFormat);
+        result.add(compassFormat);
 
-        return csvFormat;
+        return result;
     }
 
 

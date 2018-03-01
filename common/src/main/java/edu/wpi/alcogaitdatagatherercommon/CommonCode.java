@@ -1,7 +1,6 @@
 package edu.wpi.alcogaitdatagatherercommon;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Locale;
 
 /**
@@ -27,19 +26,17 @@ public class CommonCode {
     public static final String REDO_PREVIOUS_WALK_ACK = "redo_walk_acknowledgement";
     public static final String WEARABLE_DISCONNECTED = "wearable_disconnected";
     public static final String WEAR_CSV_FILE_CHANNEL_PATH = "/channel_for_wear_csv_file";
-    public static final String SENSOR_NAME = "sensor_name";
-    public static final String ACCURACY = "accuracy";
-    public static final String TIMESTAMP = "timestamp";
-    public static final String VALUES = "values";
-    public static final String SENSOR_PATH = "/sensors/";
+    public static final String START_ACK = "start_acknowledgement";
+    public static final String STOP_ACK = "stop_acknowledgement";
     public static final String OPEN_APP = "open_app";
     public static final String REQUEST_WEARABLE_DATA_SAMPLE_SIZE = "request_sample_size";
     public static final long TRANSFER_FINISHED_LONG = 4145646541563468518L;
     public static final String TRANSFER_FINISHED_STRING = "finished";
     public static final String REFRESH_CONNECTION = "refresh_connection";
-    public static final String WALK_TYPE_INFO = "walk_type_info";
+    public static final String WATCH_FILE_ACK = "watch_file_ack";
 
-    private static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss.SSS", Locale.US);
+
+    public static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss.SSS", Locale.US);
 
     public static String[] generatePrintableSensorData(String sensorName, float[] values, int accuracy, long timestamp) {
         int i = 0;
@@ -53,7 +50,7 @@ public class CommonCode {
         result[i++] = String.valueOf(accuracy);
 
         //result[i] = simpleDateFormat.format(new Date(getCurrentTimeFromSensor(timestamp)));
-        result[i] = simpleDateFormat.format(new Date(System.currentTimeMillis()));
+        result[i] = "";
 
         return result;
     }

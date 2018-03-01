@@ -5,6 +5,7 @@
     <string name="walk_instructions_title">Walk in a straight line</string>
     <string name="walk_instructions_detail">Walk for 1 minute. \nPhone will beep and vibrate at the end.</string>
     <string name="wear_collection_preference">wear_collection_preference</string>
+    <string name="wear_lock_preference">wear_lock_preference</string>
     <string name="box_integration_preference">box_integration_preference</string>
     <string name="refresh_watch_connection">Refresh Watch Connection</string>
     <string name="collecting_from_watch">Collecting Data From Watch</string>

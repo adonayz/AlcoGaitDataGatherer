@@ -3,6 +3,8 @@ package edu.wpi.alcogaitdatagatherer.ui.activities;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.FragmentManager;
+import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -16,6 +18,7 @@ import android.media.ToneGenerator;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.PowerManager;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
@@ -30,6 +33,7 @@ import android.text.method.ScrollingMovementMethod;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.animation.AlphaAnimation;
 import android.widget.Button;
 import android.widget.EditText;
@@ -57,6 +61,7 @@ import edu.wpi.alcogaitdatagatherer.R;
 import edu.wpi.alcogaitdatagatherer.models.SensorRecorder;
 import edu.wpi.alcogaitdatagatherer.models.TestSubject;
 import edu.wpi.alcogaitdatagatherer.ui.fragments.WalkReportFragment;
+import edu.wpi.alcogaitdatagatherer.ui.receivers.AdminReceiver;
 import edu.wpi.alcogaitdatagatherercommon.CommonCode;
 import edu.wpi.alcogaitdatagatherercommon.WalkType;
 import it.sephiroth.android.library.tooltip.Tooltip;
@@ -175,11 +180,21 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
             }
 
             if (bacInput.getError() == null) {
-                startRecording(bacInput.getText().toString().trim());
+                if (isWatchLockEnabled()) {
+                    notifyWearableActivity(CommonCode.WEAR_MESSAGE_PATH, CommonCode.START_ACK);
+                } else {
+                    startRecording(bacInput.getText().toString().trim());
+                }
             }
         });
 
-        stopButton.setOnClickListener(view -> stopRecording());
+        stopButton.setOnClickListener(view -> {
+            if (isWatchLockEnabled()) {
+                notifyWearableActivity(CommonCode.WEAR_MESSAGE_PATH, CommonCode.STOP_ACK);
+            } else {
+                stopRecording();
+            }
+        });
 
         restartButton.setOnClickListener(view -> {
             sensorRecorder.restartCurrentWalkNumber(bacInput, this);
@@ -281,6 +296,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
                     startProgressBar();
                     sensorRecorder.setActivity(this);
                     updateProgressBarMessage("Waiting For Watch Data");
+                    getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE, WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
                     notifyWearableActivity(CommonCode.WEAR_MESSAGE_PATH, CommonCode.SAVE_WALKS);
                 }
             } else {
@@ -456,9 +472,19 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
                         break;
                     case CommonCode.SAVE_WALKS_ACK:
                         break;
+                    case CommonCode.START_ACK:
+                        if (isWatchLockEnabled()) {
+                            startRecording(bacInput.getText().toString().trim());
+                        }
+                        break;
+                    case CommonCode.STOP_ACK:
+                        if (isWatchLockEnabled()) {
+                            stopRecording();
+                        }
+                        break;
                     case CommonCode.WEARABLE_DISCONNECTED:
                         showToast("WEARABLE DISCONNECTED");
-                        resetRecordViews(false);
+                        resetRecordViews(!isWatchLockEnabled());
                         break;
                     case CommonCode.CHECK_IF_APP_OPEN:
                         notifyWearableActivity(CommonCode.WEAR_MESSAGE_PATH, CommonCode.APP_OPEN_ACK);
@@ -577,6 +603,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
         }
         allowBACInput = allowInput;
         startButton.setVisibility(View.VISIBLE);
+        startButton.setVisibility(View.VISIBLE);
         // temporarily disallow changing BAC in the same walk number
         /*if (allowInput) {
             bacInput.setEnabled(true);
@@ -638,6 +665,11 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
     public boolean isWearablePreferenceEnabled() {
         SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
         return SP.getBoolean(getString(R.string.wear_collection_preference), false);
+    }
+
+    public boolean isWatchLockEnabled() {
+        SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+        return SP.getBoolean(getString(R.string.wear_lock_preference), false);
     }
 
     @Override
@@ -711,5 +743,20 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
 
     public void updateProgressBarMessage(String message) {
         wearConnectProgressUpdateTextView.setText(message);
+    }
+
+    public void lockPhone() {
+        PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        if (powerManager.isScreenOn()) {
+            DevicePolicyManager policyManager = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+            try {
+                policyManager.lockNow();
+            } catch (SecurityException e) {
+                Toast.makeText(this, "Needs Admisnistrator Privileges", Toast.LENGTH_LONG).show();
+                ComponentName admin = new ComponentName(this, AdminReceiver.class);
+                Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, admin);
+                this.startActivity(intent);
+            }
+        }
     }
 }

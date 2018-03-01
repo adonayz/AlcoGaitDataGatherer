@@ -49,6 +49,7 @@ import edu.wpi.alcogaitdatagatherer.R;
 import edu.wpi.alcogaitdatagatherer.models.LiteWalk;
 import edu.wpi.alcogaitdatagatherer.tasks.LiteWalkToCSVTask;
 import edu.wpi.alcogaitdatagatherercommon.CommonCode;
+import edu.wpi.alcogaitdatagatherercommon.Readings;
 import edu.wpi.alcogaitdatagatherercommon.WalkType;
 
 public class WearHomeActivity extends WearableActivity implements MessageClient.OnMessageReceivedListener, CapabilityClient.OnCapabilityChangedListener, SensorEventListener {
@@ -73,12 +74,13 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
     private ExecutorService executorService;
     private static final int BODY_SENSOR_PERMISSION_CODE = 1010;
     private static final int TIMEOUT = 15000;
-    private WalkType currentWalkType;
 
+    private WalkType currentWalkType;
     private LiteWalk normalWalk;
     private LiteWalk heelToToeWalk;
     private LiteWalk oneFootWalk;
     private LiteWalk nystagmusWalk;
+    private Readings readings;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -167,6 +169,7 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
     }
 
     private void registerSensorListeners(){
+        readings = new Readings();
         mSensorManager.registerListener(this, mHeartRateSensor, CommonCode.DELAY_IN_MILLISECONDS * 1000);
         mSensorManager.registerListener(this, mAccelerometer, CommonCode.DELAY_IN_MILLISECONDS * 1000);
         mSensorManager.registerListener(this, mGyroscope, CommonCode.DELAY_IN_MILLISECONDS * 1000);
@@ -179,10 +182,26 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         if (isRecording) {
-            storeSensorData(sensorEvent.sensor.getType(), CommonCode.generatePrintableSensorData(sensorEvent.sensor.getName(), sensorEvent.values.clone(), sensorEvent.accuracy, sensorEvent.timestamp));
+            String sensorName = sensorEvent.sensor.getName();
+            String newData[] = CommonCode.generatePrintableSensorData(sensorName, sensorEvent.values.clone(), sensorEvent.accuracy, sensorEvent.timestamp);
+            if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+                readings.setAccelerometer(newData);
+            }
+            if (sensorEvent.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
+                readings.setGyroscope(newData);
+            }
+            if (sensorEvent.sensor.getType() == Sensor.TYPE_HEART_RATE) {
+                readings.setHeartRate(newData);
+            }
+            if (readings.isWatchReady()) {
+                readings.updateTime();
+                storeSensorData(readings);
+            }
             recordedSamples++;
             //walkHolderLite.addSensorData(currentWalkType, generatePrintableSensorData(sensorEvent.sensor.getName(),sensorEvent.values, sensorEvent.accuracy, sensorEvent.timestamp, sensorEvent.sensor.getType()));
             //sendSensorData(sensorEvent.sensor.getType(), sensorEvent.sensor.getName(), sensorEvent.values, sensorEvent.accuracy, sensorEvent.timestamp);
+        } else {
+            unregisterSensorListeners();
         }
     }
 
@@ -190,8 +209,8 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
     public void onAccuracyChanged(Sensor sensor, int i) {
     }
 
-    private void storeSensorData(int sensorType, String[] sensorData) {
-        getWalk(currentWalkType).addSensorData(sensorType, sensorData);
+    private void storeSensorData(Readings readings) {
+        getWalk(currentWalkType).addSensorData(readings);
     }
 
     private LiteWalk getWalk(WalkType walkType) {
@@ -244,9 +263,20 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
         }
     }
 
+    private void prepareWalkStorage() {
+        boolean startCleaning = false;
+        for (WalkType walkType : WalkType.values()) {
+            if (walkType == currentWalkType || startCleaning) {
+                startCleaning = true;
+                getWalk(walkType).resetWalk();
+            }
+        }
+    }
+
     private void startRecording(String walkTypeStringNoSpace) {
         if(!isRecording){
             setCurrentWalkType(walkTypeStringNoSpace);
+            prepareWalkStorage();
             getWalk(currentWalkType).resetWalk();
             isRecording = true;
             recordedSamples = 0;
@@ -320,6 +350,7 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
                         break;
                     case CommonCode.WEARABLE_DISCONNECTED:
                         showToast("PHONE DISCONNECTED");
+                        new CheckPhoneReachability().execute();
                         break;
                     case CommonCode.CHECK_IF_APP_OPEN:
                         notifyPhone(CommonCode.WEAR_MESSAGE_PATH, CommonCode.APP_OPEN_ACK);
@@ -333,6 +364,16 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
                     case CommonCode.STOP_RECORDING:
                         stopRecording();
                         break;
+                    case CommonCode.START_ACK:
+                        notifyPhone(CommonCode.WEAR_MESSAGE_PATH, CommonCode.START_ACK);
+                        break;
+                    case CommonCode.STOP_ACK:
+                        notifyPhone(CommonCode.WEAR_MESSAGE_PATH, CommonCode.STOP_ACK);
+                        break;
+                    case CommonCode.WATCH_FILE_ACK:
+                        showToast("File Delivery Confirmed!");
+                        stopProgressBar();
+                        break;
                     case CommonCode.SAVE_WALKS:
                         notifyPhone(CommonCode.WEAR_MESSAGE_PATH, CommonCode.SAVE_WALKS_ACK);
                         new LiteWalkToCSVTask(getSaveFile(), this).execute(normalWalk, heelToToeWalk, oneFootWalk, nystagmusWalk);
@@ -342,6 +383,7 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
                 }
             } else if (messageEvent.getPath().equalsIgnoreCase(CommonCode.START_RECORDING_PATH)) {
                 startRecording(new String(messageEvent.getData()));
+                notifyPhone(CommonCode.WEAR_MESSAGE_PATH, CommonCode.START_ACK);
             } else if (messageEvent.getPath().equalsIgnoreCase(CommonCode.REDO_PREVIOUS_WALK_PATH)) {
                 setCurrentWalkType(new String(messageEvent.getData()));
                 getWalk(currentWalkType).resetWalk();
@@ -378,7 +420,6 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
                             @Override
                             public void onComplete(@NonNull Task<Void> task) {
                                 showToast("File Sent!");
-                                stopProgressBar();
                                 Wearable.getChannelClient(WearHomeActivity.this).close(channel);
                             }
                         });

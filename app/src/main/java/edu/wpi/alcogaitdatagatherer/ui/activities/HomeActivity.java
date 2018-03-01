@@ -317,7 +317,7 @@ public class HomeActivity extends AppCompatActivity implements BoxAuthentication
                     if (selection == RESUME) {
                         if (currentFile.isDirectory()) {
                             File reportFile = null;
-                            int maxWalks = 1;
+                            int maxWalks = 0;
 
                             for (File child : currentFile.listFiles()) {
                                 if (child.getName().equals("report.txt")) {
