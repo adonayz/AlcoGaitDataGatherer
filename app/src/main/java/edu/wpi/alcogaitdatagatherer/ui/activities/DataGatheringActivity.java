@@ -288,13 +288,13 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
     }
 
     private void startRecording(String bacInputText) {
+        sensorRecorder.setActivity(this);
         if(!sensorRecorder.isRecording()){
             if (sensorRecorder.getTestSubject().getCurrentWalkHolder().getNextWalkType() == null) {
                 sensorRecorder.prepareWalkStorage(getApplicationContext());
                 requestSave();
                 if (isWearablePreferenceEnabled()) {
                     startProgressBar();
-                    sensorRecorder.setActivity(this);
                     updateProgressBarMessage("Waiting For Watch Data");
                     getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE, WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
                     notifyWearableActivity(CommonCode.WEAR_MESSAGE_PATH, CommonCode.SAVE_WALKS);

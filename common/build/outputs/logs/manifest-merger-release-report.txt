@@ -15,6 +15,8 @@ INJECTED from C:\Users\Adonay\AndroidStudioProjects\AlcogaitDataGatherer\common\
 		INJECTED from C:\Users\Adonay\AndroidStudioProjects\AlcogaitDataGatherer\common\src\main\AndroidManifest.xml
 		ADDED from C:\Users\Adonay\AndroidStudioProjects\AlcogaitDataGatherer\common\src\main\AndroidManifest.xml:2:1-4:12
 		INJECTED from C:\Users\Adonay\AndroidStudioProjects\AlcogaitDataGatherer\common\src\main\AndroidManifest.xml
+	xmlns:android
+		ADDED from C:\Users\Adonay\AndroidStudioProjects\AlcogaitDataGatherer\common\src\main\AndroidManifest.xml:2:1-4:12
 	android:versionCode
 		INJECTED from C:\Users\Adonay\AndroidStudioProjects\AlcogaitDataGatherer\common\src\main\AndroidManifest.xml
 		ADDED from C:\Users\Adonay\AndroidStudioProjects\AlcogaitDataGatherer\common\src\main\AndroidManifest.xml:2:1-4:12
