@@ -109,7 +109,7 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
-        if (sensorEvent.accuracy == SensorManager.SENSOR_STATUS_UNRELIABLE) {
+        if (sensorEvent.sensor.getType() != Sensor.TYPE_MAGNETIC_FIELD && sensorEvent.accuracy == SensorManager.SENSOR_STATUS_UNRELIABLE) {
             return;
         }
 

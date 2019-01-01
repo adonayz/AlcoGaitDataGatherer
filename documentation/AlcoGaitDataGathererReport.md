@@ -99,13 +99,13 @@ The Java language was used for developing Android code and it was structured int
 The phone application behaves slightly differently based on the preferences that the user has set in the settings page. The following flowchart show&#39;s how the application&#39;s interface behaves with different settings (_see next page)_:
 
 <p>
-  <img src="documentation/images/1.jpg" float="left"/>
+  <img src="images/1.jpg" float="left"/>
 </p>
 <p>
-  <img src="documentation/images/2.jpg" float="left"/>
+  <img src="images/2.jpg" float="left"/>
 </p> 
 <p>
-  <img src="documentation/images/3.jpg" float="right"/>
+  <img src="images/3.jpg" float="right"/>
 </p>
 
 Figure 1.0 Phone Interface Flow Chart
@@ -115,7 +115,7 @@ Figure 1.0 Phone Interface Flow Chart
 The watch application starts with a circular progress bar till it successfully connects to the application in the phone. Then the interface changes in between two states while recording and not recording:
 
 <p>
-  <img src="documentation/images/4.png" float="right"/>
+  <img src="images/4.png" float="right"/>
 </p>
 
 Figure 1.1 Wearable Interface Flow Chart
